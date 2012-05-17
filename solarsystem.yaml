@@ -1,0 +1,80 @@
+Sol:
+    Sol:
+        type: star
+        mass: 2e+30
+        absolute magnitude: 4.83
+        spectral: G2V
+        radius: 6.955e+5
+        texture: sun_1k_tex.jpg
+        axis: 0
+        rotation: 25.38
+        bodies:
+            Mercury:
+                type: solid
+                mass: 3.3022e+23
+                radius: 2439.7
+                semimajor: 57909100
+                rotation: 58.646
+                period: 87.969
+                axis: 0.1266
+                texture: mercury_1k_tex.jpg
+                orbit:
+                    i:   "lambda d: 7.0047 + 5.00E-8 * d"
+                    a:    0.387098
+                    N:    "lambda d: 48.3313 + 3.24587E-5 * d"
+                    e:    "lambda d: 0.205635 + 5.59E-10 * d"
+                    w:    "lambda d: 29.1241 + 1.01444E-5 * d"
+                    M:    "lambda d: 168.6562 + 4.0923344368 * d"
+            Venus:
+                type: solid
+                mass: 4.8685e+24
+                radius: 6051.8
+                semimajor: 108208930
+                rotation: -243.0185
+                period: 87.969
+                axis: 177.3
+                texture: venus_1k_tex.jpg
+                orbit:
+                    i:    "lambda d: 3.3946 + 2.75E-8 * d"
+                    a:    0.723330
+                    N:    "lambda d: 76.6799 + 2.46590E-5 * d"
+                    e:    "lambda d: 0.006773 - 1.302E-9 * d"
+                    w:    "lambda d: 54.8910 + 1.38374E-5 * d"
+                    M:    "lambda d: 48.0052 + 1.6021302244 * d"
+            Earth:
+                type: solid
+                mass: 5.9742e+24
+                radius: 6371
+                semimajor: 149598261
+                rotation: 1
+                period: 365.256363004
+                axis: 23.439166666666665
+                #texture: earth_1k_tex.jpg
+                texture: earth#.png
+                normal: Earth_NormalMap_2.jpg
+                #glow: earth_glow.png
+                orbit:
+                    i:   "lambda d: -0.00054346 + -0.0001337178 * d"
+                    a:    1.00000018
+                    N:    "lambda d: -5.11260389 + -0.0024123856 * d"
+                    e:    "lambda d: 0.01673163 - 3.661e-07 * d"
+                    w:    "lambda d: 108.04266274 + 0.0031795260 * d"
+                    M:    "lambda d: -2.4631431299999917"
+                bodies:
+                  Moon:
+                    type: moon
+                    mass: 7.3477e+22 
+                    radius: 1737.1
+                    semimajor: 384399
+                    rotation: 27.321582
+                    period: 27.321582
+                    axis: 1.5424
+                    texture: moon_1k_tex.jpg
+                    orbit:
+                        i:   "lambda d: 5.16"
+                        a:    384400
+                        N:    "lambda d: 125.08 + -13.176358 * d"
+                        e:    "lambda d: 0.0554"
+                        w:    "lambda d: 318.15"
+                        M:    "lambda d: 135.27"
+                                
