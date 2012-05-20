@@ -1,11 +1,13 @@
 import sys
 sys.path.append('..')
-import SandBox
+import sandbox
 
 from pandac.PandaModules import loadPrcFileData
-#loadPrcFileData("", "notify-level-ITF-Network debug")
+loadPrcFileData("", "notify-level-ITF-ServerNetwork debug")
 from direct.directnotify.DirectNotify import DirectNotify
-log = DirectNotify().newCategory("ITF-Network")
+log = DirectNotify().newCategory("ITF-ServerNetwork")
+
+import datetime
 
 from direct.directnotify.DirectNotify import DirectNotify
 from direct.distributed.PyDatagram import PyDatagram
@@ -16,170 +18,126 @@ from direct.task import Task
 
 from panda3d.core import ConnectionWriter, NetAddress, NetDatagram, PointerToConnection, QueuedConnectionListener, QueuedConnectionManager, QueuedConnectionReader
 
+import protocol
+import universals
+
+accountEntities = {} #{"name": id}
+
 class AccountComponent(object):
     name = ""
     passwordHash = ""
     agentKeys = []
-    connection = None
+    address = None
     online = False
     admin = False
     mod = False
     owner = False
 
-class NetworkSystem(SandBox.EntitySystem):
+class NetworkSystem(sandbox.EntitySystem):
     def init(self, port=1999, backlog=1000, compress=False):
         log.debug("Initing Network System")
         self.accept("broadcastData", self.broadcastData)
         self.port = port
         self.backlog = backlog
         self.compress = compress
-        
+
         self.cManager = QueuedConnectionManager()
-        self.cListener = QueuedConnectionListener(self.cManager, 0)
         self.cReader = QueuedConnectionReader(self.cManager, 0)
-        self.cWriter = ConnectionWriter(self.cManager,0)
-        
-        self.activeConnections = {} # {connection: player}
-        self.activePlayers = {} # {player: connection}
-        
-        self.connect(self.port, self.backlog)
+        #self.cReader.setRawMode(True)
+        self.cWriter = ConnectionWriter(self.cManager, 0)
+        self.udpSocket = self.cManager.openUDPConnection(self.port)
+        self.cReader.addConnection(self.udpSocket)
+
+        self.activePlayers = []  # PlayerComponent
+        self.activeConnections = {}  # {NetAddress : PlayerComponent}
+        self.lastAck = {}  # {NetAddress: time}
+
         self.startPolling()
 
-    def connect(self, port, backlog=1000):
-        # Bind to our socket
-        tcpSocket = self.cManager.openTCPServerRendezvous(port, backlog)
-        self.cListener.addConnection(tcpSocket)
-
     def startPolling(self):
-        taskMgr.add(self.tskListenerPolling, "serverListenTask", -40)
-        taskMgr.add(self.tskDisconnectPolling, "serverDisconnectTask", -39)
-        taskMgr.add(self.getData, "serverPollReader", -38)
-        
-    def tskListenerPolling(self, task):
-        if self.cListener.newConnectionAvailable():
-            rendezvous = PointerToConnection()
-            netAddress = NetAddress()
-            newConnection = PointerToConnection()
-        
-            if self.cListener.getNewConnection(rendezvous, netAddress, newConnection):
-                newConnection = newConnection.p()
-                #self.activeConnections.append(newConnection) # Remember connection
-                self.cReader.addConnection(newConnection)     # Begin reading connection
-                #key = "requestLogin"
-                #self.sendData(newConnection, key)
-                print "New connection"
-        return Task.cont
-    
-    def tskDisconnectPolling(self, task):
-        while self.cManager.resetConnectionAvailable() == True:
-            connPointer = PointerToConnection()
-            self.cManager.getResetConnection(connPointer)
-            connection = connPointer.p()
-            
-            # Remove the connection we just found to be "reset" or "disconnected"
-            self.cReader.removeConnection(connection)
-            
-            # Loop through the activeConnections till we find the connection we just deleted
-            # and remove it from our activeConnections list
-            #for c in range(0, len(self.activeConnections)):
-                #if self.activeConnections[c] == connection:
-                    #del self.activeConnections[c]
-                    #break
-            #player = self.activeConnections
-            del self.activePlayers[self.activeConnections[connection]]
-            del self.activeConnections[connection]
-                    
-        return Task.cont
-    
-    def broadcastData(self, key, *args):
-        # Broadcast data out to all activeConnections
-        for con in self.activePlayers.keys():
-            self.sendData(con, key, *args)
-        
-    def processData(self, netDatagram):
-        myIterator = PyDatagramIterator(netDatagram)
-        return self.decode(myIterator.getString())
-        
-    def getClients(self):
-        # return a list of all activeConnections
-        return self.activeConnections
-        
-    def encode(self, data, compress=False):
-        # encode(and possibly compress) the data with rencode
-        return rencode.dumps(data)
-        
-    def decode(self, data):
-        # decode(and possibly decompress) the data with rencode
-        return rencode.loads(data)
-        
-    def sendData(self, player, key, *args):
-        print "Server sends:", key, args
-        myPyDatagram = PyDatagram()
-        myPyDatagram.addString(self.encode([key, args]))
-        self.cWriter.send(myPyDatagram, self.activePlayers[player])
-        
-    def lowSendData(self, connection, key, *args):
-        """For cases, such as login and packet filtering, where the player/connection mapping may not exist."""
-        print "Server low sends:", key, args
-        myPyDatagram = PyDatagram()
-        myPyDatagram.addString(self.encode([key, args]))
-        self.cWriter.send(myPyDatagram, connection)
-    
-    def getData(self, task=None):
-        data = []
-        while self.cReader.dataAvailable():
+        taskMgr.add(self.tskReaderPolling, "serverListenTask", -40)
+        taskMgr.doMethodLater(10, self.activeCheck, "activeCheck")
+
+    def tskReaderPolling(self, taskdata):
+        if self.cReader.dataAvailable():
             datagram = NetDatagram()  # catch the incoming data in this instance
             # Check the return value; if we were threaded, someone else could have
             # snagged this data before we did
             if self.cReader.getData(datagram):
-                #con = PointerToConnection()
-                #con = datagram.getConnection()
-                datum=self.processData(datagram)
-                #me = {}
-                #me["test"] = "got" + datum["test"]
-                #self.sendData(me, con)
-                data.append(datum) 
-        #return data
-        #print "Server getdata", data
-        if data:
-            #messenger.send("gotData", data)
-            #TODO: This is an expensive check. Need to think of a better way to structure this
-            print "Server gets:", data[0][0], data[0][1]
-            if data[0][0] == "login":
-                self.loginManager(datagram.getConnection(), data[0][1][0], data[0][1][1])
-            #print "got some data!", data[0][0], data[0][1]
-            messenger.send(data[0][0], [self.activeConnections[datagram.getConnection()], data[0][1]])
-        return Task.cont
-    
-    def loginManager(self, connection, username, password):
-        playerEntity = None
-        playerList = []
-        owner = False
-        for id in SandBox.systems[PlayerSystem].entities.keys():
-            player = SandBox.components[id][PlayerComponent]
-            log.debug("Login detected: Checking player " + player.name)
-            playerList.append({"name": player.name}) #This is a dict in case we expand functionality later
-            if player.name == username and player.password == password:
-                playerEntity = player
-            elif player.name == username and player.password != password:
-                self.lowSendData(connection, "loginResponse", False, "Incorrect password")
-                return
-        if not playerEntity and not NEWPLAYERS:
-            self.lowSendData(connection, "loginResponse", False, "Not Accepting new players")
-            return
-        elif not playerEntity and NEWPLAYERS:
-            if not self.entities:
-                owner = True
-            playerEntity = SandBox.createEntity()
-            playerComponent = PlayerComponent()
-            playerEntity.addComponent(playerComponent)
-            playerComponent.name = username
-            playerComponent.password = password
-            playerComponent.owner = owner
+                myIterator = PyDatagramIterator(datagram)
+                msgID = myIterator.getUint8()
 
-        self.activeConnections[connection] = playerEntity
-        self.activePlayers[playerEntity] = connection
-        
-        self.sendData(playerEntity, "loginResponse", True, state.state)
-        self.sendData(playerEntity, "playerList", playerList)
-        self.broadcastData("playerJoined", username)
+                #If not in our protocol range then we just reject
+                if msgID < 0 or msgID > 200:
+                    return taskdata.cont
+
+                self.lastAck[datagram.getAddress()] = datetime.datetime.now()
+                #TODO Switch to ip address and port
+
+                #Order of these will need to be optimized later
+                #We now pull out the rest of our headers
+                remotePacketCount = myIterator.getUint8()
+                ack = myIterator.getUint8()
+                acks = myIterator.getUint16()
+                hashID = myIterator.getUint16()
+
+                if msgID == protocol.LOGIN:
+                    username = myIterator.getString()
+                    password = myIterator.getString()
+                    if username not in accountEntities:
+                        entity = sandbox.createEntity()
+                        component = AccountComponent()
+                        component.name = username
+                        component.passwordHash = password
+                        if not accountEntities:
+                            component.owner = True
+                        component.address = datagram.getAddress()
+                        entity.addComponent(component)
+                        accountEntities[username] = entity.id
+                        log.info("New player " + username + " logged in.")
+                        #
+                        self.activePlayers.append(component)
+                        self.activeConnections[component.address] = component
+
+                        myPyDatagram = PyDatagram()
+                        myPyDatagram.addUint8(protocol.LOGIN_ACCEPTED)
+                        #myPyDatagram.addUint8(packetCount)
+                        myPyDatagram.addUint8(0)
+                        myPyDatagram.addUint8(0)
+                        myPyDatagram.addUint16(0)
+                        myPyDatagram.addUint16(0)
+                        #
+                        myPyDatagram.addFloat32(universals.day)
+                        self.send(myPyDatagram, datagram.getAddress())
+                        #TODO: Send initial states?
+                    else:
+                        component = sandbox.entities[accountEntities[username]].getComponent(AccountComponent)
+                        if component.passwordHash != password:
+                            log.info("Player " + username + " has the wrong password.")
+                        else:
+                            component.connection = datagram.getConnection()
+                            log.info("Player " + username + " logged in.")
+
+        return taskdata.cont
+
+    def activeCheck(self, task):
+        """Checks for last ack from all known active conenctions."""
+        for address, lastTime in self.lastAck.items():
+            if (datetime.datetime.now() - lastTime).seconds > 30:
+                component = self.activeConnections[address]
+                #TODO: Disconnect
+        return task.again
+
+    def send(self, datagram, connection):
+        self.cWriter.send(datagram, self.udpSocket, connection)
+
+    def broadcastData(self, key, *args):
+        # Broadcast data out to all activeConnections
+        for accountID in accountEntities.items():
+            sandbox.entities[accountID].getComponent()
+        for con in self.activePlayers.keys():
+            self.sendData(con, key, *args)
+
+    def processData(self, netDatagram):
+        myIterator = PyDatagramIterator(netDatagram)
+        return self.decode(myIterator.getString())
