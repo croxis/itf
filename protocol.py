@@ -42,6 +42,11 @@ def genericPacket(key, packetCount=0):
 #Client to server datagram generators
 
 #Server to client datagram generators
-def loginAccepted():
+def loginAccepted(x):
     datagram = genericPacket(LOGIN_ACCEPTED)
-    datagram.addString()
+    datagram.addUint8(x)  #entity id of user
+    return datagram
+
+def newShip():
+    datagram = genericPacket(NEW_SHIP)
+    return datagram

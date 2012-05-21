@@ -9,19 +9,17 @@ log = DirectNotify().newCategory("ITF-ServerNetwork")
 
 import datetime
 
-from direct.directnotify.DirectNotify import DirectNotify
 from direct.distributed.PyDatagram import PyDatagram
 from direct.distributed.PyDatagramIterator import PyDatagramIterator
-from direct.fsm import FSM
-from direct.showbase.DirectObject import DirectObject
-from direct.task import Task
 
-from panda3d.core import ConnectionWriter, NetAddress, NetDatagram, PointerToConnection, QueuedConnectionListener, QueuedConnectionManager, QueuedConnectionReader
+from panda3d.core import ConnectionWriter, NetDatagram, QueuedConnectionManager, QueuedConnectionReader
 
 import protocol
+import ships
 import universals
 
 accountEntities = {} #{"name": id}
+
 
 class AccountComponent(object):
     name = ""
@@ -32,6 +30,7 @@ class AccountComponent(object):
     admin = False
     mod = False
     owner = False
+
 
 class NetworkSystem(sandbox.EntitySystem):
     def init(self, port=1999, backlog=1000, compress=False):
@@ -53,12 +52,14 @@ class NetworkSystem(sandbox.EntitySystem):
         self.lastAck = {}  # {NetAddress: time}
 
         self.startPolling()
+        self.accept("shipGenerated", self.shipGenerated)
 
     def startPolling(self):
-        taskMgr.add(self.tskReaderPolling, "serverListenTask", -40)
+        #taskMgr.add(self.tskReaderPolling, "serverListenTask", -40)
         taskMgr.doMethodLater(10, self.activeCheck, "activeCheck")
 
-    def tskReaderPolling(self, taskdata):
+    #def tskReaderPolling(self, taskdata):
+    def begin(self):
         if self.cReader.dataAvailable():
             datagram = NetDatagram()  # catch the incoming data in this instance
             # Check the return value; if we were threaded, someone else could have
@@ -69,7 +70,7 @@ class NetworkSystem(sandbox.EntitySystem):
 
                 #If not in our protocol range then we just reject
                 if msgID < 0 or msgID > 200:
-                    return taskdata.cont
+                    return
 
                 self.lastAck[datagram.getAddress()] = datetime.datetime.now()
                 #TODO Switch to ip address and port
@@ -110,6 +111,7 @@ class NetworkSystem(sandbox.EntitySystem):
                         myPyDatagram.addFloat32(universals.day)
                         self.send(myPyDatagram, datagram.getAddress())
                         #TODO: Send initial states?
+                        messenger.send("newPlayerShip", [component, entity])
                     else:
                         component = sandbox.entities[accountEntities[username]].getComponent(AccountComponent)
                         if component.passwordHash != password:
@@ -117,8 +119,6 @@ class NetworkSystem(sandbox.EntitySystem):
                         else:
                             component.connection = datagram.getConnection()
                             log.info("Player " + username + " logged in.")
-
-        return taskdata.cont
 
     def activeCheck(self, task):
         """Checks for last ack from all known active conenctions."""
@@ -141,3 +141,23 @@ class NetworkSystem(sandbox.EntitySystem):
     def processData(self, netDatagram):
         myIterator = PyDatagramIterator(netDatagram)
         return self.decode(myIterator.getString())
+
+    def shipGenerated(self, ship):
+        datagram = protocol.newShip()
+        datagram.addUint8(ship.getComponent(ships.PilotComponent).accountEntityID)
+        datagram.addUint8(ship.id)
+        datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getX())
+        datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getY())
+        datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getZ())
+        datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getLinerVelocity().x)
+        datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getLinerVelocity().y)
+        datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getLinerVelocity().z)
+        datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getH())
+        datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getP())
+        datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getR())
+        datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getAngualVelocity().x)
+        datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getAngualVelocity().y)
+        datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getAngualVelocity().z)
+        print "Checking if new ship is valid for udp"
+        print self.cWriter.isValidForUdp(datagram)
+

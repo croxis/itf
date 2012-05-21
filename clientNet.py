@@ -1,19 +1,14 @@
 import sandbox
-
-from pandac.PandaModules import loadPrcFileData
-loadPrcFileData("", "notify-level-ITF-ClientNetwork debug")
-from direct.directnotify.DirectNotify import DirectNotify
-log = DirectNotify().newCategory("ITF-ClientNetwork")
-
 from panda3d.core import QueuedConnectionManager, QueuedConnectionReader, ConnectionWriter, NetAddress, NetDatagram
 from direct.distributed.PyDatagram import PyDatagram
 from direct.distributed.PyDatagramIterator import PyDatagramIterator
 
 import protocol
-import solarSystem
 import universals
+from universals import log
 
-class ClientNetworkSystem(sandbox.EntitySystem):
+
+class NetworkSystem(sandbox.EntitySystem):
     def init(self, port=2000, server="127.0.0.1", serverPort=1999, backlog=1000, compress=False):
         self.packetCount = 0
         self.port = port
@@ -28,12 +23,7 @@ class ClientNetworkSystem(sandbox.EntitySystem):
         self.udpSocket = self.cManager.openUDPConnection(self.port)
         self.cReader.addConnection(self.udpSocket)
 
-        self.startPolling()
-
-    def startPolling(self):
-        taskMgr.add(self.tskReaderPolling, "serverListenTask", -40)
-
-    def tskReaderPolling(self, taskdata):
+    def begin(self):
         if self.cReader.dataAvailable():
             datagram = NetDatagram()  # catch the incoming data in this instance
             # Check the return value; if we were threaded, someone else could have
@@ -44,7 +34,7 @@ class ClientNetworkSystem(sandbox.EntitySystem):
 
                 #If not in our protocol range then we just reject
                 if msgID < 0 or msgID > 200:
-                    return taskdata.cont
+                    return
 
                 #Order of these will need to be optimized later
                 #We now pull out the rest of our headers
@@ -60,7 +50,6 @@ class ClientNetworkSystem(sandbox.EntitySystem):
                     print "Day set to", universals.day
                 elif msgID == protocol.LOGIN_DENIED:
                     log.info("Login failed")
-        return taskdata.cont
 
     def genBasicData(self, proto):
         myPyDatagram = PyDatagram()
@@ -74,32 +63,14 @@ class ClientNetworkSystem(sandbox.EntitySystem):
 
     def sendLogin(self, username, hashpassword):
         datagram = self.genBasicData(protocol.LOGIN)
-        datagram.addString("User name")
-        datagram.addString("Hashed password")
-        log.debug("sending login")
+        datagram.addString(username)
+        datagram.addString(hashpassword)
+        universals.log.debug("sending login")
         self.sendData(datagram)
 
     def sendData(self, datagram):
-        sent = self.cWriter.send(datagram, self.udpSocket, self.serverAddress) 
+        sent = self.cWriter.send(datagram, self.udpSocket, self.serverAddress)
         while not sent:
             print "resending"
             sent = self.cWriter.send(datagram, self.udpSocket, self.serverAddress)
-
-log.info("Setting up Solar System Body Simulator")
-sandbox.addSystem(solarSystem.SolarSystemSystem(solarSystem.BaryCenter, solarSystem.Body, solarSystem.Star))
-
-def planetPositionDebug(task):
-    log.debug("===== Day: " + str(universals.day) + " =====")
-    for bod in sandbox.getSystem(solarSystem.SolarSystemSystem).bodies:
-        log.debug(bod.getName() + ": " + str(bod.getPos()))
-    return task.again
-
-taskMgr.doMethodLater(10, planetPositionDebug, "Position Debug")
-
-network = ClientNetworkSystem()
-sandbox.addSystem(network)
-
-
-
-taskMgr.doMethodLater(2, network.sendLogin, 'Task Name', extraArgs=["croxis", "pass"])
-sandbox.run()
+            

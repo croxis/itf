@@ -3,13 +3,15 @@
 class BulletPhysicsComponent(object):
     '''Contains reference to bullet shape and node'''
     bulletShape = None
-    node = None    
+    node = None
+    nodePath = None
 
 class AIPilotComponent(object):
     ai = None
 
 class PilotComponent(object):
-    pass
+    account = None
+    accountEntityID = 0
 
 class ThrustComponent(object):
     '''Maximum thrust values, in newtons'''

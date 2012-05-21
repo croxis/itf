@@ -4,6 +4,7 @@ from math import sin, cos, radians, degrees, sqrt, atan2
 import sandbox
 import yaml
 
+from direct.stdpy.file import *
 from panda3d.core import NodePath, Point3
 
 import universals

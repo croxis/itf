@@ -1,5 +1,12 @@
+from direct.directnotify.DirectNotify import DirectNotify
+log = DirectNotify().newCategory("ITF")
 
-solarSystemRoot = 0
+from panda3d.core import NodePath
+
+runClient = False
+runServer = False
+
+solarSystemRoot = NodePath("SystemCenter")
 # Connivance constant, number of seconds in an Earth day
 SECONDSINDAY = 86400
 
