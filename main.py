@@ -110,7 +110,7 @@ if universals.runClient:
     sandbox.addSystem(clientNet.NetworkSystem())
 if universals.runServer:
     import serverNet
-    log.info("Setting up server network")
+    log.info("Setting up server Pathnetwork")
     sandbox.addSystem(serverNet.NetworkSystem())
 
 log.info("Setting up Solar System Body Simulator")
@@ -130,11 +130,11 @@ def planetPositionDebug(task):
     return task.again
 
 def loginDebug(task):
-    sandbox.getSystem(clientNet.NetworkSystem).sendLogin("User Name", "Hash Password")
+    sandbox.getSystem(clientNet.NetworkSystem).sendLogin(universals.username, "Hash Password")
 
 taskMgr.doMethodLater(10, planetPositionDebug, "Position Debug")
 if universals.runClient:
-    taskMgr.doMethodLater(5, loginDebug, "Position Debug")
+    taskMgr.doMethodLater(1, loginDebug, "Login Debug")
 log.info("Setup complete.")
 sandbox.run()
 

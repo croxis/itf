@@ -99,17 +99,8 @@ class NetworkSystem(sandbox.EntitySystem):
                         #
                         self.activePlayers.append(component)
                         self.activeConnections[component.address] = component
-
-                        myPyDatagram = PyDatagram()
-                        myPyDatagram.addUint8(protocol.LOGIN_ACCEPTED)
-                        #myPyDatagram.addUint8(packetCount)
-                        myPyDatagram.addUint8(0)
-                        myPyDatagram.addUint8(0)
-                        myPyDatagram.addUint16(0)
-                        myPyDatagram.addUint16(0)
-                        #
-                        myPyDatagram.addFloat32(universals.day)
-                        self.send(myPyDatagram, datagram.getAddress())
+                        ackDatagram = protocol.loginAccepted(entity.id)
+                        self.sendData(ackDatagram, datagram.getAddress())
                         #TODO: Send initial states?
                         messenger.send("newPlayerShip", [component, entity])
                     else:
@@ -128,36 +119,25 @@ class NetworkSystem(sandbox.EntitySystem):
                 #TODO: Disconnect
         return task.again
 
-    def send(self, datagram, connection):
-        self.cWriter.send(datagram, self.udpSocket, connection)
+    def sendData(self, datagram, address):
+        self.cWriter.send(datagram, self.udpSocket, address)
 
-    def broadcastData(self, key, *args):
+    def broadcastData(self, datagram):
         # Broadcast data out to all activeConnections
-        for accountID in accountEntities.items():
-            sandbox.entities[accountID].getComponent()
-        for con in self.activePlayers.keys():
-            self.sendData(con, key, *args)
+        #for accountID in accountEntities.items():
+            #sandbox.entities[accountID].getComponent()
+        for addr in self.activeConnections.keys():
+            self.sendData(datagram, addr)
 
     def processData(self, netDatagram):
         myIterator = PyDatagramIterator(netDatagram)
         return self.decode(myIterator.getString())
 
     def shipGenerated(self, ship):
-        datagram = protocol.newShip()
-        datagram.addUint8(ship.getComponent(ships.PilotComponent).accountEntityID)
-        datagram.addUint8(ship.id)
-        datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getX())
-        datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getY())
-        datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getZ())
-        datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getLinerVelocity().x)
-        datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getLinerVelocity().y)
-        datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getLinerVelocity().z)
-        datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getH())
-        datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getP())
-        datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getR())
-        datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getAngualVelocity().x)
-        datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getAngualVelocity().y)
-        datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getAngualVelocity().z)
-        print "Checking if new ship is valid for udp"
-        print self.cWriter.isValidForUdp(datagram)
+        datagram = protocol.newShip(ship)
+        print "Checking if new ship is valid for udp:", self.cWriter.isValidForUdp(datagram)
+        self.broadcastData(datagram)
 
+class ClientComponent:
+    """Theoretical component that stores which clients are 
+    also tracking this entity as well as last update"""

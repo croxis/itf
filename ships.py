@@ -22,5 +22,6 @@ class ThrustComponent(object):
     yaw = 1
     roll = 1
 
-class HealthComponent(object):
+class InfoComponent(object):
     health = 100
+    name = "A ship"

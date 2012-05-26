@@ -8,6 +8,9 @@ import universals
 from universals import log
 
 
+#PROPOSAL! {server entity id: client entity id} and reverse lookup dict too
+
+
 class NetworkSystem(sandbox.EntitySystem):
     def init(self, port=2000, server="127.0.0.1", serverPort=1999, backlog=1000, compress=False):
         self.packetCount = 0
@@ -44,8 +47,11 @@ class NetworkSystem(sandbox.EntitySystem):
                 hashID = myIterator.getUint16()
                 sourceOfMessage = datagram.getConnection()
 
-                if msgID == protocol.LOGIN_ACCEPTED:
+                if msgID == protocol.NEW_SHIP:
+                    log.info("New ship")
+                elif msgID == protocol.LOGIN_ACCEPTED:
                     log.info("Login accepted")
+                    entityID = myIterator.getUint8()
                     universals.day = myIterator.getFloat32()
                     print "Day set to", universals.day
                 elif msgID == protocol.LOGIN_DENIED:
@@ -74,3 +80,8 @@ class NetworkSystem(sandbox.EntitySystem):
             print "resending"
             sent = self.cWriter.send(datagram, self.udpSocket, self.serverAddress)
             
+
+class ServerComponent:
+    """Theoretical component for server generated and sent entities"""
+    serverEntityID = 0
+    lastServerUpdate = 0

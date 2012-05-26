@@ -1,3 +1,7 @@
+from direct.distributed.PyDatagram import PyDatagram
+
+import ships
+import universals
 #Client to server even
 #Server to client odd
 #If both will probably be even
@@ -28,7 +32,11 @@ LOGIN = 100
 LOGIN_DENIED = 101
 LOGIN_ACCEPTED = 103
 
+ACCOUNT_REC = 110  # Requests name of account for a given id entity id
+ACCOUNT_ACK = 111
+
 CHAT = 104
+
 
 def genericPacket(key, packetCount=0):
     myPyDatagram = PyDatagram()
@@ -42,11 +50,31 @@ def genericPacket(key, packetCount=0):
 #Client to server datagram generators
 
 #Server to client datagram generators
+
+
 def loginAccepted(x):
     datagram = genericPacket(LOGIN_ACCEPTED)
-    datagram.addUint8(x)  #entity id of user
+    datagram.addUint8(x)  # entity id of user
+    datagram.addFloat32(universals.day)
     return datagram
 
-def newShip():
+
+def newShip(ship):
     datagram = genericPacket(NEW_SHIP)
+    datagram.addUint8(ship.getComponent(ships.PilotComponent).accountEntityID)
+    datagram.addUint8(ship.id)
+    datagram.addString(ship.getComponent(ships.InfoComponent).name)
+    datagram.addUint8(ship.getComponent(ships.InfoComponent).health)
+    datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).nodePath.getX())
+    datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).nodePath.getY())
+    datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).nodePath.getZ())
+    datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getLinearVelocity().x)
+    datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getLinearVelocity().y)
+    datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getLinearVelocity().z)
+    datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).nodePath.getH())
+    datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).nodePath.getP())
+    datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).nodePath.getR())
+    datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getAngularVelocity().x)
+    datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getAngularVelocity().y)
+    datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getAngularVelocity().z)
     return datagram

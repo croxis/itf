@@ -25,3 +25,6 @@ TIMEFACTOR = 100.0
 
 # Julian day based on J2000.
 day = 9131.25
+
+# Keeps track of the user name of the client
+username = "Moofoo"

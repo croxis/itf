@@ -20,3 +20,6 @@ class PhysicsSystem(sandbox.EntitySystem):
         dt = globalClock.getDt()
         self.world.doPhysics(dt)
         #world.doPhysics(dt, 10, 1.0/180.0)
+
+    def process(self, entity):
+        pass
