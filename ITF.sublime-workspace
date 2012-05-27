@@ -4,6 +4,14 @@
 		"selected_items":
 		[
 			[
+				"account",
+				"accountEntity	(local, instance)"
+			],
+			[
+				"acc",
+				"accountEntity"
+			],
+			[
 				"sol",
 				"solarSystemRoot  (variable)"
 			],
@@ -123,7 +131,7 @@
 			"file": "playerShipSystem.py",
 			"settings":
 			{
-				"buffer_size": 1641,
+				"buffer_size": 1765,
 				"line_ending": "Unix"
 			}
 		},
@@ -136,10 +144,13 @@
 			}
 		},
 		{
+			"contents": "from direct.distributed.PyDatagram import PyDatagram\n\nimport ships\nimport universals\n#Client to server even\n#Server to client odd\n#If both will probably be even\n\n# Packet structure\n# msgID = myIterator.getUint8()\n# remotePacketCount = myIterator.getUint8()\n# ack = myIterator.getUint8()\n# acks = myIterator.getUint16()\n# hashID = myIterator.getUint16()\n\n#Protocol space\n#0-99 common game elements\n#100-199 login and server handshaking and admin stuff\n\nACK = 0\nPOS_UPDATE = 1  # Position update for a given ship.  1 - 10 times a second\nTHRUST_REQ = 2\nPOS_PHYS_UPDATE = 3   # Full physics update for a given ship.\n# 1 per second unless a non predictive force (ie non gravity) is applied\nDATE_UPDATE = 5  # 1 per 5 seconds\nCHAT = 6\n\nNEW_SHIP = 9  # A ship has entered sensor range. All data is sent in this packet\nNEW_STATION = 11  # A station has entered sensor range.\n\nLOGIN = 100\nLOGIN_DENIED = 101\nLOGIN_ACCEPTED = 103\n\nACCOUNT_REC = 110  # Requests name of account for a given id entity id\nACCOUNT_ACK = 111\n\nCHAT = 104\n\n\ndef genericPacket(key, packetCount=0):\n    myPyDatagram = PyDatagram()\n    myPyDatagram.addUint8(key)\n    myPyDatagram.addUint8(packetCount)\n    myPyDatagram.addUint8(0)\n    myPyDatagram.addUint16(0)\n    myPyDatagram.addUint16(0)\n    return myPyDatagram\n\n#Client to server datagram generators\n\n#Server to client datagram generators\n\n\ndef loginAccepted(x):\n    datagram = genericPacket(LOGIN_ACCEPTED)\n    datagram.addUint8(x)  # entity id of user\n    datagram.addFloat32(universals.day)\n    return datagram\n\n\ndef newShip(ship):\n    datagram = genericPacket(NEW_SHIP)\n    datagram.addUint16(ship.getComponent(ships.PilotComponent).accountEntityID)\n    datagram.addUint16(ship.id)\n    datagram.addString(ship.getComponent(ships.InfoComponent).name)\n    datagram.addUint8(ship.getComponent(ships.InfoComponent).health)\n    datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).nodePath.getX())\n    datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).nodePath.getY())\n    datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).nodePath.getZ())\n    datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getLinearVelocity().x)\n    datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getLinearVelocity().y)\n    datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getLinearVelocity().z)\n    datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).nodePath.getH())\n    datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).nodePath.getP())\n    datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).nodePath.getR())\n    datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getAngularVelocity().x)\n    datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getAngularVelocity().y)\n    datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getAngularVelocity().z)\n    return datagram\n",
 			"file": "protocol.py",
+			"file_size": 2995,
+			"file_write_time": 1338052901000000,
 			"settings":
 			{
-				"buffer_size": 2995,
+				"buffer_size": 2997,
 				"line_ending": "Unix"
 			}
 		},
@@ -147,7 +158,7 @@
 			"file": "physics.py",
 			"settings":
 			{
-				"buffer_size": 609,
+				"buffer_size": 1523,
 				"line_ending": "Unix"
 			}
 		},
@@ -171,7 +182,7 @@
 			"file": "clientNet.py",
 			"settings":
 			{
-				"buffer_size": 3426,
+				"buffer_size": 4104,
 				"line_ending": "Unix"
 			}
 		}
@@ -179,9 +190,13 @@
 	"build_system": "Packages/User/ITF server.sublime-build",
 	"command_palette":
 	{
-		"height": 285.0,
+		"height": 75.0,
 		"selected_items":
 		[
+			[
+				"Package Control: in",
+				"Package Control: Install Package"
+			],
 			[
 				"Package Control: ",
 				"Package Control: Remove Package"
@@ -248,15 +263,19 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"add",
+			"datagram",
 			"SandBox",
 			"NodePath"
 		],
 		"highlight": true,
-		"in_selection": false,
+		"in_selection": true,
 		"preserve_case": false,
 		"regex": false,
 		"replace_history":
 		[
+			"get",
+			"myIterator",
 			"sandbox"
 		],
 		"reverse": false,
@@ -268,7 +287,7 @@
 	"groups":
 	[
 		{
-			"selected": 2,
+			"selected": 4,
 			"sheets":
 			[
 				{
@@ -387,15 +406,15 @@
 					"file": "playerShipSystem.py",
 					"settings":
 					{
-						"buffer_size": 1641,
+						"buffer_size": 1765,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1404,
-								1404
+								15,
+								15
 							]
 						],
 						"settings":
@@ -487,7 +506,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 396.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -504,8 +523,8 @@
 						"selection":
 						[
 							[
-								1825,
-								1825
+								1794,
+								1794
 							]
 						],
 						"settings":
@@ -597,7 +616,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 948.0,
+						"translation.y": 1938.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -607,15 +626,15 @@
 					"file": "protocol.py",
 					"settings":
 					{
-						"buffer_size": 2995,
+						"buffer_size": 2997,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1376,
-								1376
+								1693,
+								1693
 							]
 						],
 						"settings":
@@ -707,7 +726,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 924.0,
+						"translation.y": 990.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -717,15 +736,15 @@
 					"file": "physics.py",
 					"settings":
 					{
-						"buffer_size": 609,
+						"buffer_size": 1523,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								609,
-								609
+								1522,
+								1522
 							]
 						],
 						"settings":
@@ -812,10 +831,12 @@
 								"Python Django": "python"
 							},
 							"sublimelinter_wrap_find": true,
-							"syntax": "Packages/Python/Python.tmLanguage"
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
 						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.x": 5.0,
+						"translation.y": 396.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -823,7 +844,7 @@
 			]
 		},
 		{
-			"selected": 0,
+			"selected": 2,
 			"sheets":
 			[
 				{
@@ -838,8 +859,8 @@
 						"selection":
 						[
 							[
-								470,
-								470
+								525,
+								525
 							]
 						],
 						"settings":
@@ -1049,15 +1070,15 @@
 					"file": "clientNet.py",
 					"settings":
 					{
-						"buffer_size": 3426,
+						"buffer_size": 4104,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								2177,
-								2177
+								1987,
+								1987
 							]
 						],
 						"settings":
@@ -1149,7 +1170,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 726.0,
+						"translation.y": 742.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -1185,7 +1206,7 @@
 		"cols":
 		[
 			0.0,
-			0.487225401445,
+			0.474322175639,
 			1.0
 		],
 		"rows":
@@ -1195,10 +1216,6 @@
 		]
 	},
 	"menu_visible": true,
-	"output.exec":
-	{
-		"height": 220.0
-	},
 	"replace":
 	{
 		"height": 64.0
@@ -1221,6 +1238,10 @@
 		"height": 500.0,
 		"selected_items":
 		[
+			[
+				"sa",
+				"/home/croxis/src/SandBox/sandbox.sublime-project"
+			],
 			[
 				"",
 				"/home/croxis/src/SandBox/sandbox.sublime-project"

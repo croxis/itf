@@ -1,9 +1,11 @@
 import sandbox
+from panda3d.core import Point3, VBase3, Vec3
 from panda3d.core import QueuedConnectionManager, QueuedConnectionReader, ConnectionWriter, NetAddress, NetDatagram
 from direct.distributed.PyDatagram import PyDatagram
 from direct.distributed.PyDatagramIterator import PyDatagramIterator
 
 import protocol
+import ships
 import universals
 from universals import log
 
@@ -49,6 +51,27 @@ class NetworkSystem(sandbox.EntitySystem):
 
                 if msgID == protocol.NEW_SHIP:
                     log.info("New ship")
+                    playerPilotID = myIterator.getUint16()
+                    shipID = myIterator.getUint16()
+                    shipName = myIterator.getString()
+                    health = myIterator.getUint8()
+                    position = Point3(myIterator.getFloat32(), myIterator.getFloat32(), myIterator.getFloat32())
+                    linearVelocity = Vec3(myIterator.getFloat32(), myIterator.getFloat32(), myIterator.getFloat32())
+                    rotiation = VBase3(myIterator.getFloat32(), myIterator.getFloat32(), myIterator.getFloat32())
+                    angularVelocity = Vec3(myIterator.getFloat32(), myIterator.getFloat32(), myIterator.getFloat32())
+                    ship = sandbox.addEntity(shipID)
+                    component = ships.PilotComponent()
+                    component.accountEntityID = playerPilotID
+                    ship.addComponent(component)
+                    component = ships.BulletPhysicsComponent
+                    messenger.send("addSpaceShip", [component, shipName, position, linearVelocity])
+                    ship.addComponent(component)
+                    component = ships.ThrustComponent()
+                    ship.addComponent(component)
+                    component = ships.InfoComponent()
+                    component.health = health
+                    component.name = shipName
+                    ship.addComponent(component)
                 elif msgID == protocol.LOGIN_ACCEPTED:
                     log.info("Login accepted")
                     entityID = myIterator.getUint8()

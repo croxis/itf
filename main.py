@@ -100,6 +100,8 @@ if universals.runClient and not universals.runServer:
 if not universals.runClient and universals.runServer:
     base.setSleep(0.001)
 
+base.disableMouse()
+
 import physics
 import playerShipSystem
 import ships

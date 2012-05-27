@@ -22,6 +22,7 @@ class PlayerShipsSystem(sandbox.EntitySystem):
         ship = sandbox.createEntity()
         component = ships.PilotComponent()
         component.account = account
+        component.accountEntityID = accountEntity.id
         ship.addComponent(component)
         component = ships.BulletPhysicsComponent()
         component.bulletShape = BulletSphereShape(5)
@@ -39,6 +40,7 @@ class PlayerShipsSystem(sandbox.EntitySystem):
         component = ships.InfoComponent()
         ship.addComponent(component)
         messenger.send("shipGenerated", [ship])
+        messenger.send("putPlayerOnShip", [accountEntity.id, ship.id])
         #TODO Transmit player's ship data
         #TODO Broadcast new ship data
         #TODO Prioritize updating new client of surroundings
