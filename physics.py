@@ -9,11 +9,11 @@ import universals
 
 
 def getPhysics():
-    return sandbox.getSystem(PhysicsSystem)
+    return sandbox.get_system(PhysicsSystem)
 
 
 def getPhysicsWorld():
-    return sandbox.getSystem(PhysicsSystem).world
+    return sandbox.get_system(PhysicsSystem).world
 
 
 def addBody(body):
@@ -34,14 +34,14 @@ class PhysicsSystem(sandbox.EntitySystem):
     def process(self, entity):
         pass
 
-    def addSpaceship(self, component, accountName, position, linearVelcocity):
+    def addSpaceship(self, component, shipName, position, linearVelcocity):
         component.bulletShape = BulletSphereShape(5)
-        component.node = BulletRigidBodyNode(accountName)
+        component.node = BulletRigidBodyNode(shipName)
         component.node.setMass(1.0)
         component.node.addShape(component.bulletShape)
         component.nodePath = universals.solarSystemRoot.attachNewNode(component.node)
         addBody(component.node)
-        position = sandbox.getSystem(solarSystem.SolarSystemSystem).solarSystemRoot.find("**/Earth").getPos()
+        position = sandbox.get_system(solarSystem.SolarSystemSystem).solarSystemRoot.find("**/Earth").getPos()
         #component.nodePath.setPos(position + Point3(6671, 0, 0))
         component.nodePath.setPos(position)
         #component.node.setLinearVelocity(Vec3(0, 7.72983, 0))

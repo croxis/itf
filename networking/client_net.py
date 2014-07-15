@@ -1,3 +1,6 @@
+from direct.directnotify.DirectNotify import DirectNotify
+log = DirectNotify().newCategory("ITF-ClientNet")
+
 import sandbox
 from panda3d.core import Point3, VBase3, Vec3
 from panda3d.core import QueuedConnectionManager, QueuedConnectionReader, ConnectionWriter, NetAddress, NetDatagram
@@ -11,9 +14,66 @@ from universals import log
 
 
 #PROPOSAL! {server entity id: client entity id} and reverse lookup dict too
+class NetworkSystem(sandbox.UDPNetworkSystem):
+    def init2(self):
+        self.packet_count = 0
+        self.accept('login', self.sendLogin)
+        self.accept('requestStations', self.requestStations)
+        self.accept('requestThrottle', self.requestThrottle)
+        self.accept('requestCreateShip', self.requestCreateShip)
+        self.accept('requestTarget', self.requestTarget)
+
+    def processPacket(self, msgID, remotePacketCount, ack, acks, hashID, serialized, address):
+        #If not in our protocol range then we just reject
+        if msgID < 0 or msgID > 200:
+            return
+        data = protocol_old.readProto(msgID, serialized)
+        if msgID == protocol_old.CONFIRM_STATIONS:
+            sandbox.send('shipUpdate', [data, True])
+            sandbox.send('setShipID', [data])
+            sandbox.send('makeStationUI', [data])
+        elif msgID == protocol_old.PLAYER_SHIPS:
+            sandbox.send('shipUpdates', [data])
+            sandbox.send('shipSelectScreen', [data])
+        elif msgID == protocol_old.POS_PHYS_UPDATE:
+            sandbox.send('shipUpdates', [data])
+        elif msgID == protocol_old.SHIP_CLASSES:
+            sandbox.send('shipClassList', [data])
+
+    def sendLogin(self, serverAddress):
+        self.serverAddress = serverAddress
+        datagram = self.generateGenericPacket(protocol_old.LOGIN)
+        universals.log.debug("sending login")
+        self.send(datagram)
+
+    def requestCreateShip(self, shipName, className):
+        datagram = protocol_old.requestCreateShip(shipName, className)
+        self.send(datagram)
+
+    def requestStations(self, shipid, stations):
+        datagram = protocol_old.requestStations(shipid, stations)
+        self.send(datagram)
+
+    def requestThrottle(self, throttle, heading):
+        datagram = protocol_old.requestThrottle(throttle, heading)
+        self.send(datagram)
+
+    def requestTarget(self, targetID):
+        datagram = protocol_old.requestTurretTarget(targetID)
+        self.send(datagram)
+
+    def send(self, datagram):
+        self.sendData(datagram, self.serverAddress)
 
 
-class NetworkSystem(sandbox.EntitySystem):
+class ServerComponent:
+    """Theoretical component for server generated and sent entities"""
+    serverEntityID = 0
+    lastServerUpdate = 0
+
+
+
+class OldNetworkSystem(sandbox.EntitySystem):
     def init(self, port=2000, server="127.0.0.1", serverPort=1999, backlog=1000, compress=False):
         self.packetCount = 0
         self.port = port
@@ -63,7 +123,7 @@ class NetworkSystem(sandbox.EntitySystem):
                     component = ships.PilotComponent()
                     component.accountEntityID = playerPilotID
                     ship.addComponent(component)
-                    component = ships.BulletPhysicsComponent
+                    component = ships.BulletPhysicsComponent()
                     messenger.send("addSpaceShip", [component, shipName, position, linearVelocity])
                     ship.addComponent(component)
                     component = ships.ThrustComponent()
@@ -72,11 +132,16 @@ class NetworkSystem(sandbox.EntitySystem):
                     component.health = health
                     component.name = shipName
                     ship.addComponent(component)
+                elif msgID == protocol.PLAYER_MOVED_SHIP:
+                    log.debug("Player moved ship")
+                    accountID = myIterator.getUint16()
+                    shipID = myIterator.getUint16()
+                    print sandbox.components[shipID]
+                    universals.shipNode = sandbox.components[shipID][ships.BulletPhysicsComponent].nodePath
                 elif msgID == protocol.LOGIN_ACCEPTED:
                     log.info("Login accepted")
                     entityID = myIterator.getUint8()
                     universals.day = myIterator.getFloat32()
-                    print "Day set to", universals.day
                 elif msgID == protocol.LOGIN_DENIED:
                     log.info("Login failed")
 

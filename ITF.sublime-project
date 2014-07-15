@@ -3,6 +3,9 @@
 	[
 		{
 			"path": "/home/croxis/src/ITF"
-		}
+		},
+        {
+            "path": "/home/croxis/src/SandBox"
+        }
 	]
 }

@@ -53,6 +53,7 @@ Sol:
                 texture: earth#.png
                 normal: Earth_NormalMap_2.jpg
                 #glow: earth_glow.png
+                atmosphere: 1
                 orbit:
                     i:   "lambda d: -0.00054346 + -0.0001337178 * d"
                     a:    1.00000018

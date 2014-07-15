@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Main Menu</title>
+    <link href="jquery-ui.css" rel="stylesheet">
+     <script>
+    $(function() {
+        $( "input[type=submit], a, button" )
+        .button()
+        .click(function( event ) {
+            event.preventDefault();
+        });
+    });
+    </script>
+</head>
+<body>
+Some texty text!
+<button>A button element</button>
+<input type="submit" value="A submit button">
+<a href="#">An anchor</a>
+
+<script src="jquery-2.1.1.js"></script>
+<script src="jquery-ui.js"></script>
+</body>
+</html>

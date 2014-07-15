@@ -25,3 +25,7 @@ class ThrustComponent(object):
 class InfoComponent(object):
     health = 100
     name = "A ship"
+
+
+class SelfComponent(object):
+    '''A client only component that tracks which ship the player is on'''

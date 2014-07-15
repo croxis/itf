@@ -28,6 +28,8 @@ CHAT = 6
 NEW_SHIP = 9  # A ship has entered sensor range. All data is sent in this packet
 NEW_STATION = 11  # A station has entered sensor range.
 
+PLAYER_MOVED_SHIP = 13 # When a player moves to a new ship
+
 LOGIN = 100
 LOGIN_DENIED = 101
 LOGIN_ACCEPTED = 103
@@ -61,8 +63,8 @@ def loginAccepted(x):
 
 def newShip(ship):
     datagram = genericPacket(NEW_SHIP)
-    datagram.addUint8(ship.getComponent(ships.PilotComponent).accountEntityID)
-    datagram.addUint8(ship.id)
+    datagram.addUint16(ship.getComponent(ships.PilotComponent).accountEntityID)
+    datagram.addUint16(ship.id)
     datagram.addString(ship.getComponent(ships.InfoComponent).name)
     datagram.addUint8(ship.getComponent(ships.InfoComponent).health)
     datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).nodePath.getX())
@@ -77,4 +79,10 @@ def newShip(ship):
     datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getAngularVelocity().x)
     datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getAngularVelocity().y)
     datagram.addFloat32(ship.getComponent(ships.BulletPhysicsComponent).node.getAngularVelocity().z)
+    return datagram
+
+def movedShip(ship):
+    datagram = genericPacket(PLAYER_MOVED_SHIP)
+    datagram.addUint16(ship.getComponent(ships.PilotComponent).accountEntityID)
+    datagram.addUint16(ship.id)
     return datagram

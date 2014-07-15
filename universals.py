@@ -1,7 +1,7 @@
 from direct.directnotify.DirectNotify import DirectNotify
 log = DirectNotify().newCategory("ITF")
 
-from panda3d.core import NodePath
+from panda3d.core import NodePath, Point3
 
 runClient = False
 runServer = False
@@ -28,3 +28,6 @@ day = 9131.25
 
 # Keeps track of the user name of the client
 username = "Moofoo"
+
+# Keeps track of the position of the client
+shipNode = NodePath("void")
