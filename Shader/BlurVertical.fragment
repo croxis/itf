@@ -1,0 +1,18 @@
+#version 130
+
+#pragma optionNV (unroll all)
+
+#include "Includes/Configuration.include"
+#include "Includes/PostProcessBlur.include"
+
+uniform sampler2D colorTex;
+uniform sampler2D dofStorage;
+
+in vec2 texcoord;
+
+out vec4 result;
+
+void main() {
+    // gl_FragColor = mipmapBasedBlur(texcoord, vec2(0,1), colorTex, dofStorage);
+    result = texture(colorTex, texcoord);
+}

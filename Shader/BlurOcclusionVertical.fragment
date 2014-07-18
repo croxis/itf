@@ -1,0 +1,20 @@
+#version 130
+
+#include "Includes/Configuration.include"
+#include "Includes/PostProcessBlur.include"
+
+uniform sampler2D colorTex;
+uniform sampler2D normalTex;
+
+in vec2 texcoord;
+
+out vec4 result;
+
+void main() {
+    ivec2 screenCoord = ivec2(texcoord * textureSize(colorTex, 0) );
+    float alpha = edgePreservingAlphaBlur(texcoord, screenCoord, ivec2(0, 1), colorTex, normalTex);
+    result = vec4(texture(colorTex, texcoord).rgb, alpha);
+
+    // result = vec4(texture(colorTex, texcoord).a);
+    // result = vec4(0,1,0,1);
+}
