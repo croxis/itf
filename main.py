@@ -26,15 +26,17 @@ from __future__ import unicode_literals
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-c", "--client", action="store_true", help="run as a multiplayer client")
-parser.add_argument("-s", "--server", action="store_true", help="run as a multiplayer server")
+parser.add_argument("-c", "--client", action="store_true",
+                    help="run as a multiplayer client")
+parser.add_argument("-s", "--server", action="store_true",
+                    help="run as a multiplayer server")
 args = parser.parse_args()
 
 run_server = args.server
 run_client = args.client
 local_only = False
 if run_client:
-    #We must import this before panda due to talmoc issues
+    # We must import this before panda due to talmoc issues
     from cefpython3 import cefpython
 
 from direct.directnotify.DirectNotify import DirectNotify
@@ -45,7 +47,6 @@ from networking import server_net, client_net
 
 loadPrcFileData("", "notify-level-ITF debug")
 log = DirectNotify().newCategory("ITF")
-
 
 if not run_client and not run_server:
     run_client = True
@@ -63,10 +64,43 @@ spacedrive.init(run_server=run_server,
 
 import solarSystem
 
-def update(task=None):
-        """ Main update task """
-        import sandbox
 
+def main_menu():
+    """Temporary main menu management."""
+    import sandbox
+    from panda3d.core import Vec3
+    from spacedrive.renderpipeline import BetterShader, PointLight
+    import math
+
+    solar_system_db = {'Sol': {
+        'Sol': {'spectral': 'G2V', 'absolute magnitude': 4.83,
+                'texture': 'sun_1k_tex.jpg', 'mass': 2e+30,
+                'radius': 695500.0,
+                'rotation': 25.38, 'type': 'star', 'bodies': {
+            'Earth': {'atmosphere': 1, 'normal': 'Earth_NormalMap_2.jpg',
+                      'semimajor': 149598261, 'period': 365.256363004,
+                      'texture': 'earth#.png', 'orbit': {'a': 1.00000018,
+                                                         'e': 'lambda d: 0.01673163 - 3.661e-07 * d',
+                                                         'w': 'lambda d: 108.04266274 + 0.0031795260 * d',
+                                                         'i': 'lambda d: -0.00054346 + -0.0001337178 * d',
+                                                         'M': 'lambda d: -2.4631431299999917',
+                                                         'N': 'lambda d: -5.11260389 + -0.0024123856 * d'},
+                      'mass': 5.9742e+24, 'radius': 6371, 'rotation': 1,
+                      'type': 'solid', 'bodies': {
+                'Moon': {'semimajor': 384399, 'period': 27.321582,
+                         'texture': 'moon_1k_tex.jpg',
+                         'orbit': {'a': 384400, 'e': 'lambda d: 0.0554',
+                                   'w': 'lambda d: 318.15',
+                                   'i': 'lambda d: 5.16',
+                                   'M': 'lambda d: 135.27',
+                                   'N': 'lambda d: 125.08 + -13.176358 * d'},
+                         'mass': 7.3477e+22, 'radius': 1737.1,
+                         'rotation': 27.321582,
+                         'type': 'moon', 'axis': 1.5424}},
+                      'axis': 23.439166666666665}}, 'axis': 0}}}
+
+    def update(task=None):
+        """ Main update task """
         # Simulate 30 FPS
         # import time
         # time.sleep( max(0.0, 0.033))
@@ -78,65 +112,52 @@ def update(task=None):
             # displace every light every frame - performance test!
             for i, light in enumerate(lights):
                 lightAngle = float(math.sin(i * 1253325.0)) * \
-                    math.pi * 2.0 + animationTime * 1.0
+                             math.pi * 2.0 + animationTime * 1.0
                 initialPos = initialLightPos[i]
                 light.setPos(initialPos + Vec3(math.sin(lightAngle) * 0.0,
                                                math.cos(lightAngle) * 0.0,
-                                               math.sin(animationTime) * 10.0 ) )
+                                               math.sin(animationTime) * 10.0))
         if task is not None:
             return task.cont
 
-if run_server:
-    log.info("Setting up server network")
-    spacedrive.init_server_net(server_net.NetworkSystem)
-if run_client:
-    log.info("Setting up client network")
-    spacedrive.init_client_net(client_net.NetworkSystem)
-    log.info("TODO: Setting up graphics translators")
-    #sandbox.add_system(graphics.GraphicsSystem(solarSystem.PlanetRender, solarSystem.StarRender))
-    log.info("Setting up client gui")
-    spacedrive.init_gui()
-    import gui_manager
-    spacedrive.gui_system.setup_screen(gui_manager.MainMenu())
-    # Just for now. We will do a formal main menu scene later
-    import sandbox
-    from panda3d.core import Vec3
-    from spacedrive.renderpipeline import BetterShader, PointLight
-    import math
     shuttle = sandbox.base.loader.loadModel("Ships/Shuttle MKI/shuttle")
     shuttle.reparent_to(sandbox.base.render)
+    shuttle.set_pos(0, 50, 0)
+    shuttle.set_hpr(-110, 30, 30)
     skybox = sandbox.base.loader.loadModel("Skybox/Skybox")
     skybox.setScale(100)
     skybox.reparentTo(sandbox.base.render)
-    #shuttle.set_shader(BetterShader.load('Ships/Shuttle MKI/shuttle.vertex', 'Ships/Shuttle MKI/shuttle.fragment'))
-    shuttle.set_shader(sandbox.base.render_pipeline.getDefaultObjectShader(False))
+    # shuttle.set_shader(BetterShader.load('Ships/Shuttle MKI/shuttle.vertex', 'Ships/Shuttle MKI/shuttle.fragment'))
+    shuttle.set_shader(
+        sandbox.base.render_pipeline.getDefaultObjectShader(False))
     sandbox.base.render_pipeline.reloadShaders()
     skybox.setShader(BetterShader.load(
-            "Shader/DefaultObjectShader/vertex.glsl", "Shader/Skybox/fragment.glsl"))
+        "Shader/DefaultObjectShader/vertex.glsl",
+        "Shader/Skybox/fragment.glsl"))
     lights = []
     initialLightPos = []
     colors = [
-            Vec3(1, 0, 0),
-            Vec3(0, 1, 0),
-            Vec3(0, 0, 1),
-            Vec3(1, 1, 0),
+        Vec3(1, 0, 0),
+        Vec3(0, 1, 0),
+        Vec3(0, 0, 1),
+        Vec3(1, 1, 0),
 
-            Vec3(1, 0, 1),
-            Vec3(0, 1, 1),
-            Vec3(1, 0.5, 0),
-            Vec3(0, 0.5, 1.0),
-        ]
+        Vec3(1, 0, 1),
+        Vec3(0, 1, 1),
+        Vec3(1, 0.5, 0),
+        Vec3(0, 0.5, 1.0),
+    ]
 
     # Add some shadow casting lights
     for i in xrange(8):
         angle = float(i) / 8.0 * math.pi * 2.0
 
-        pos = Vec3(math.sin(angle) * 10.0, math.cos(angle) * 10.0, 7)
+        pos = Vec3(math.sin(angle) * 10.0, math.cos(angle) * 10.0 + 50, 7)
         # pos = Vec3( (i-3.5)*15.0, 9, 5.0)
         light = PointLight()
         light.setRadius(30.0)
         # light.setColor(Vec3(2))
-        light.setColor(colors[i]*2.0)
+        light.setColor(colors[i] * 2.0)
         light.setPos(pos)
         light.setShadowMapResolution(2048)
         light.setCastsShadows(True)
@@ -146,23 +167,6 @@ if run_client:
         lights.append(light)
         initialLightPos.append(pos)
 
-    # Add even more normal lights
-    for x in xrange(4):
-        for y in xrange(4):
-            break
-            angle = float(x + y * 4) / 16.0 * math.pi * 2.0
-            light = PointLight()
-            light.setRadius(20.0)
-            light.setColor(
-                Vec3(math.sin(angle) * 0.5 + 0.5,
-                    math.cos(angle) * 0.5 + 0.5, 0.5) * 1.0)
-            initialPos = Vec3(
-                (float(x) - 2.0) * 10.0, (float(y) - 2.0) * 10.0, 10.0)
-            light.setPos(initialPos)
-            initialLightPos.append(initialPos)
-            sandbox.base.render_pipeline.addLight(light)
-            lights.append(light)
-
     ambient = PointLight()
     ambient.setRadius(300.0)
     ambient.setPos(Vec3(10, 10, 10))
@@ -170,19 +174,38 @@ if run_client:
     sandbox.base.render_pipeline.addLight(ambient)
     sandbox.base.addTask(update, "update")
 
+    from spacedrive import orbit_system
+    key = 'Sol'
+    orbit_system.create_solar_system(name=key, database=solar_system_db)
 
 
+if run_server:
+    log.info("Setting up server network")
+    spacedrive.init_server_net(server_net.NetworkSystem)
+if run_client:
+    log.info("Setting up client network")
+    spacedrive.init_client_net(client_net.NetworkSystem)
+    log.info("TODO: Setting up graphics translators")
+    spacedrive.init_graphics()
+    # sandbox.add_system(graphics.GraphicsSystem(solarSystem.PlanetRender, solarSystem.StarRender))
+    log.info("Setting up client gui")
+    spacedrive.init_gui()
+    import gui_manager
 
-
+    spacedrive.gui_system.setup_screen(gui_manager.MainMenu())
 
 log.info("Setting up Solar System Body Simulator")
 spacedrive.init_orbits()
 
 log.info("TODO: Setting up dynamic physics")
-#sandbox.add_system(physics.PhysicsSystem(ships.BulletPhysicsComponent))
+# sandbox.add_system(physics.PhysicsSystem(ships.BulletPhysicsComponent))
 
 log.info("TODO: Setting up player-ship interface system")
-#sandbox.add_system(playerShipSystem.PlayerShipsSystem(ships.PilotComponent))
+# sandbox.add_system(playerShipSystem.PlayerShipsSystem(ships.PilotComponent))
+
+# Just for now. We will do a formal main menu scene later
+if run_client:
+    main_menu()
 
 
 def planetPositionDebug(task):
@@ -191,8 +214,10 @@ def planetPositionDebug(task):
         log.debug(bod.getName() + ": " + str(bod.getPos()))
     return task.again
 
+
 def loginDebug(task):
-    sandbox.getSystem(client_net.NetworkSystem).sendLogin(universals.username, "Hash Password")
+    sandbox.getSystem(client_net.NetworkSystem).sendLogin(universals.username,
+                                                          "Hash Password")
 
 #taskMgr.doMethodLater(10, planetPositionDebug, "Position Debug")
 #if universals.runClient:

@@ -32,7 +32,7 @@ state-cache #f
 # fake-texture-image someimage.png
 
 # Frame rate meter
-frame-rate-meter-milliseconds #t
+#frame-rate-meter-milliseconds #t
 frame-rate-meter-update-interval 1.0
 frame-rate-meter-text-pattern %0.2f fps
 frame-rate-meter-ms-text-pattern %0.3f ms

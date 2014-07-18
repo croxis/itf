@@ -114,7 +114,7 @@ class NetworkSystem(sandbox.UDPNetworkSystem):
 
     def sendShipUpdates(self, task):
         ships = sandbox.get_system(shipSystem.ShipSystem).getPlayerShipEntities()
-        ships += sandbox.getEntitiesByComponentType(shipComponents.AIPilotComponent)
+        ships += sandbox.get_entities_by_component_type(shipComponents.AIPilotComponent)
         #self.broadcastData(protocol.sendShipUpdates(ships))
         for ship in ships:
             self.broadcastData(protocol_old.sendShipUpdates([ship]))

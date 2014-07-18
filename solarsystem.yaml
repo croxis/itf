@@ -1,7 +1,7 @@
 Sol:
     Sol:
         type: star
-        mass: 2e+30
+        mass: 2.0e+30
         absolute magnitude: 4.83
         spectral: G2V
         radius: 6.955e+5
