@@ -30,30 +30,57 @@ uniform mat4 p3d_ModelViewProjectionMatrix;
 // We need this for the velocity
 uniform mat4 lastMVP;
 
-
-
 void main() {
-
-    // Transform normal to world space
-    vOutput.normalWorld   = normalize(trans_model_to_world * vec4(p3d_Normal, 0) ).xyz;
-    vOutput.tangentWorld  = normalize(trans_model_to_world * vec4(p3d_Tangent, 0) ).xyz;
-    vOutput.binormalWorld = normalize(trans_model_to_world * vec4(p3d_Binormal, 0) ).xyz;
-
-    vOutput.tangentWorld = p3d_Tangent;
-    vOutput.binormalWorld = p3d_Binormal;
-    vOutput.normalWorld = p3d_Normal;
-
-
-    // vOutput.normalWorld = FAST_mul_no_w(trans_model_to_world, p3d_Normal).rgb;
-
+    // Start sphereization code
     // Replace p3d_Vertex with our own variable for planet transformations
     vec4 v = p3d_Vertex;
     //By adding 1 to z we move our grid to make a cube.
-    //We do 1 instead of 0.5 to make all the math easy.
+    //We do 1 instead of 0.5 to make all the math easy - set radius not diameter
     v.z += 1.0;
     //vec4 vertex = v;//Shows it as a cube
     // Normalize! Use vertex instead of p3dvertex
     vec4 vertex = vec4(normalize(v.xyz), v.w);
+    vec3 normal = vertex.xyz; // Works only for sphere
+
+    //double iy = 1/sqrt(normal.x*normal.x+normal.z*normal.z);
+    //vec x (-normal.z*iy,0,normal.x*iy);
+
+    vec3 tangent = p3d_Tangent;
+
+    vec3 c1 = cross(normal, vec3(0.0, 0.0, 1.0));
+	vec3 c2 = cross(normal, vec3(0.0, 1.0, 0.0));
+
+	if(length(c1)>length(c2))
+	{
+		tangent = c1;
+	}
+	else
+	{
+		tangent = c2;
+	}
+
+	tangent = normalize(tangent);
+
+
+    //vec3 tangent = normalize(p3d_Tangent - normal);
+    vec3 binormal = cross(tangent, normal);
+
+    //tangent = p3d_Tangent;
+    //binormal = p3d_Binormal;
+    //End spherization code
+
+    // Start RenderPipeline code
+    // Transform normal to world space
+    vOutput.normalWorld   = normalize(trans_model_to_world * vec4(normal, 0) ).xyz;
+    vOutput.tangentWorld  = normalize(trans_model_to_world * vec4(tangent, 0) ).xyz;
+    vOutput.binormalWorld = normalize(trans_model_to_world * vec4(binormal, 0) ).xyz;
+
+    vOutput.tangentWorld = tangent;
+    vOutput.binormalWorld = binormal;
+    vOutput.normalWorld = normal;
+
+
+    // vOutput.normalWorld = FAST_mul_no_w(trans_model_to_world, p3d_Normal).rgb;
 
     // Transform position to world space
     vOutput.positionWorld = (trans_model_to_world * vertex).xyz;

@@ -159,17 +159,26 @@ def main_menu():
         lights.append(light)
         initialLightPos.append(pos)
 
-    '''ambient = PointLight()
+    ambient = PointLight()
     ambient.setRadius(300.0)
     ambient.setPos(Vec3(10, 10, 10))
     ambient.setColor(Vec3(1.0))
-    sandbox.base.render_pipeline.addLight(ambient)'''
+    sandbox.base.render_pipeline.addLight(ambient)
     sandbox.base.addTask(update, "update")
 
     from spacedrive import orbit_system
 
     key = 'Sol'
     orbit_system.create_solar_system(name=key, database=solar_system_db)
+
+
+def toggleSceneWireframe():
+    base.wireframe = not base.wireframe
+
+    if base.wireframe:
+        base.render.setRenderModeWireframe()
+    else:
+        base.render.clearRenderMode()
 
 
 if run_server:
@@ -184,8 +193,12 @@ if run_client:
     log.info("Setting up client gui")
     spacedrive.init_gui()
     import gui_manager
-
     spacedrive.gui_system.setup_screen(gui_manager.MainMenu())
+    base.wireframe = False
+    base.accept("f3", toggleSceneWireframe)
+
+
+
 
 log.info("Setting up Solar System Body Simulator")
 spacedrive.init_orbits()
