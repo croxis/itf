@@ -67,6 +67,8 @@ const float sqrt_of_2 = 1.4142135623;
 #define DSSDO_MAX_DISTANCE 4.0
 #define DSSDO_MAX_ANGLE 0.4
 #define DSSDO_STRENGTH 1.3
+#define DEBUGGER_ACTIVE 1
+#define DEBUG_RM_DEFAULT 1
 
 // Performance functions
 
@@ -119,6 +121,7 @@ vec4 FAST_normalize_prefactor(vec4 v) {
 #define NORMAL_TEX p3d_Texture1
 #define SPECULAR_TEX p3d_Texture2
 #define ROUGHNESS_TEX p3d_Texture3
+#define DISPLACEMENT_TEX p3d_Texture4
 
 // FILE: 'Shader/Includes/Light.include' 
 struct Light {
@@ -139,6 +142,7 @@ const float npScale = 1.7777;
 
 vec2 encodeNormal(vec3 n)
 {
+    // return n.xz;
     vec2 enc = n.xy / (n.z+1.0);
     enc /= npScale;
     return enc*0.5 + 0.5;
@@ -147,6 +151,7 @@ vec2 encodeNormal(vec3 n)
 // Unpacks a normal from a vec2
 vec3 decodeNormal(vec2 encoded)
 {
+    // return vec3(encoded.xy,0);
     vec3 nn =
         vec3(encoded.xy, 0)*vec3(2*npScale,2*npScale,0) +
         vec3(-npScale,-npScale,1);
@@ -177,7 +182,7 @@ const mat3 rgbToYCbCr = mat3(
     0.144, 0.5, -0.081312
 );
 
-const float expScale = 32.0;
+const float expScale = 64.0;
 const float yiqBias = 0.125;
 
 vec2 packColor(vec3 color) {
@@ -338,7 +343,6 @@ float rand(float a, float b){
 }
 
 
-
 #ifdef DSSDO_ENABLED
 
     // Store configuration variables in const variables
@@ -348,10 +352,10 @@ float rand(float a, float b){
     // const float dssdoMaxAngle    = DSSDO_MAX_ANGLE;
     // const float dssdoFactor      = DSSDO_STRENGTH;
     const int   dssdoSampleCount = 32;
-    const float dssdoRadius      = 1.0;
-    const float dssdoMaxDistance = 5.0;
-    const float dssdoMaxAngle    = 0.3;
-    const float dssdoFactor      = 1.0;
+    const float dssdoRadius      = 0.4;
+    const float dssdoMaxDistance = 10.0;
+    const float dssdoMaxAngle    = 0.1;
+    const float dssdoFactor      = 0.7;
 
 
     const int   dssdoPoissonFactor = 32 / dssdoSampleCount;
@@ -364,10 +368,10 @@ float rand(float a, float b){
 
     uniform sampler2D dssdoNoiseTex;
 
-    float computeDSSDO(vec2 texcoord, ivec2 screenCoord, Material material, float dist, sampler2D normalTex, sampler2D positionTex) {
+    vec4 computeDSSDO(vec2 texcoord, ivec2 screenCoord, Material material, float dist, sampler2D normalTex, sampler2D positionTex) {
 
         #ifdef DEBUG_DISABLE_SSDO
-            return 1.0;
+            return vec4(0,0,0,1);
         #endif
 
         float radius = clamp( (1.0 / dist) * 1000.0 * dssdoRadius, 0.0, 80.0);
@@ -378,7 +382,7 @@ float rand(float a, float b){
         vec3 noise = texelFetch(dssdoNoiseTex, screenCoord % 4, 0).rgb*2.0 - 1.0;
         noise *= 0.5;
 
-        float occlusionResult = 0.0;
+        vec4 occlusionResult = vec4(0.0);
 
         for (int i = 1; i < 32; i++) {
 
@@ -407,15 +411,17 @@ float rand(float a, float b){
 
             // attenuation = pow(differenceNormalized.x * 2.0, 10.0);
 
-            occlusionResult += attenuation / float(dssdoSampleCount);
+            occlusionResult += attenuation * sh2Weight * vec4(differenceNormalized, 1);
             // occlusionResult += attenuation / 1.0;
 
             // occlusionResult += abs(material.normal.y);
 
         }
 
-        occlusionResult = 1.0 - max(0.0, occlusionResult * dssdoFactor);
-        return saturate(occlusionResult);
+        occlusionResult *= dssdoFactor;
+
+        // occlusionResult = 1.0 - max(0.0, occlusionResult * dssdoFactor);
+        return occlusionResult;
     }
 
 #else
@@ -751,7 +757,7 @@ float computePointLightAttenuation(Light light, float distanceToLight) {
     return attenuation;
 }
 
-vec3 applyPointLight(Light light, Material material) {
+vec3 applyPointLight(Light light, Material material, vec4 ssdoDirection, inout float occlusionResult) {
 
     float distanceToLight = distance(material.position, light.position);
     float distanceRelative = distanceToLight / light.radius;
@@ -762,11 +768,15 @@ vec3 applyPointLight(Light light, Material material) {
     vec3  n = normalize(material.normal);
     vec3  h = normalize(l + v);
 
+    float occlusionInfluence = saturate(dot(vec4(l,0.1), ssdoDirection)) * attenuation;
+    occlusionResult += occlusionInfluence * safeDot(n, l);
+
+
     return computeLightModel(light, material, l,v, n, h, attenuation);
 }
 
 
-vec3 applyPointLightWithShadow(Light light, Material material) {
+vec3 applyPointLightWithShadow(Light light, Material material, vec4 ssdoDirection, inout float occlusionResult) {
 
     float distanceToLight = distance(material.position, light.position);
     float distanceRelative = distanceToLight / light.radius;
@@ -914,6 +924,16 @@ void main() {
 
     vec3 result = vec3(0);
 
+
+    // Compute Occlusion
+    float distanceToCamera = distance(cameraPosition, material.position);
+    vec4 occlusionFactor = computeDSSDO(texcoord,screenCoord, material, distanceToCamera, data1, data0);
+
+    // Metallic materials don't have much occlusion
+    occlusionFactor = mix(occlusionFactor, vec4(0.0), saturate(material.metallic-0.3) );
+
+    float occlusionTotal = 0.0;
+
     // Compute point lights
     ivec2 baseOffset = precomputeCoord + ivec2(0,1);
     ivec2 currentOffset = ivec2(0);
@@ -925,7 +945,7 @@ void main() {
         currentLightId = imageLoad(lightsPerTile, baseOffset + currentOffset).r;
         currentLight = lights[currentLightId];
 
-        result += applyPointLight(currentLight, material);
+        result += applyPointLight(currentLight, material, occlusionFactor, occlusionTotal);
     }
 
     // Compute shadow point lights
@@ -936,18 +956,12 @@ void main() {
         currentLight = lights[currentLightId];
 
         #if USE_SHADOWS
-            result += applyPointLightWithShadow(currentLight, material);
-        #else:
-            result += applyPointLight(currentLight, material);
+            result += applyPointLightWithShadow(currentLight, material, occlusionFactor, occlusionTotal);
+        #else
+            result += applyPointLight(currentLight, material, occlusionFactor, occlusionTotal);
         #endif
     }
 
-    // Now, compute rOcclusion
-    float distanceToCamera = distance(cameraPosition, material.position);
-    float occlusionFactor = computeDSSDO(texcoord,screenCoord, material, distanceToCamera, data1, data0);
-
-    // Metallic materials don't have much occlusion
-    occlusionFactor = mix(occlusionFactor, 1.0, saturate(material.metallic-0.3) );
     // occlusionFactor = 1.0;
 
     // Visualize lights per tile
@@ -956,12 +970,6 @@ void main() {
     // result = mix(result, processedColor, 0.5);
 
     // result = vec3(material.baseColor);
-
-    #ifdef DSSDO_ONLY
-        result.xyz = vec3(1);
-    #endif
-
-
 
     #ifdef DEBUG_RM_BASECOLOR
         result = material.baseColor;
@@ -989,7 +997,7 @@ void main() {
 
 
     // HDR Mapping
-     result.xyz = 1.0f - exp(-1.0 * result.xyz);
+    // result.xyz = 1.0f - exp(-1.0 * result.xyz);
 
     // SRGB
     result.xyz = sqrt(result.xyz);
@@ -999,5 +1007,5 @@ void main() {
     // result = vec3(floatBitsToInt(1.0) == 0 ? vec3(1,0,0) : vec3(0,1,0));
     // result = vec3(material.normal);
 
-    lightingResult = vec4(result, occlusionFactor);
+    lightingResult = vec4(result, saturate(1.0 - occlusionTotal) );
 }

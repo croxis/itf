@@ -66,6 +66,8 @@ const float sqrt_of_2 = 1.4142135623;
 #define DSSDO_MAX_DISTANCE 4.0
 #define DSSDO_MAX_ANGLE 0.4
 #define DSSDO_STRENGTH 1.3
+#define DEBUGGER_ACTIVE 1
+#define DEBUG_RM_DEFAULT 1
 
 // Performance functions
 
@@ -118,6 +120,7 @@ vec4 FAST_normalize_prefactor(vec4 v) {
 #define NORMAL_TEX p3d_Texture1
 #define SPECULAR_TEX p3d_Texture2
 #define ROUGHNESS_TEX p3d_Texture3
+#define DISPLACEMENT_TEX p3d_Texture4
 
 // FILE: 'Shader/Includes/Light.include' 
 struct Light {
@@ -137,6 +140,7 @@ const float npScale = 1.7777;
 
 vec2 encodeNormal(vec3 n)
 {
+    // return n.xz;
     vec2 enc = n.xy / (n.z+1.0);
     enc /= npScale;
     return enc*0.5 + 0.5;
@@ -145,6 +149,7 @@ vec2 encodeNormal(vec3 n)
 // Unpacks a normal from a vec2
 vec3 decodeNormal(vec2 encoded)
 {
+    // return vec3(encoded.xy,0);
     vec3 nn =
         vec3(encoded.xy, 0)*vec3(2*npScale,2*npScale,0) +
         vec3(-npScale,-npScale,1);
@@ -175,7 +180,7 @@ const mat3 rgbToYCbCr = mat3(
     0.144, 0.5, -0.081312
 );
 
-const float expScale = 32.0;
+const float expScale = 64.0;
 const float yiqBias = 0.125;
 
 vec2 packColor(vec3 color) {

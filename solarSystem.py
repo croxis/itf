@@ -92,23 +92,23 @@ class SolarSystemSystem(sandbox.EntitySystem):
         component = 0
         '''print entity
         try:
-            component = entity.getComponent(BaryCenter)
+            component = entity.get_component(BaryCenter)
             print 1
         except:
             try:
-                component = entity.getComponent(Body)
+                component = entity.get_component(Body)
                 print 2
             except:
-                component = entity.getComponent(Star)
+                component = entity.get_component(Star)
                 print 3
         finally:
             if component.hasOrbit:
                 component.setPos(self.getBodyPosition(component, universals.day))'''
-        component = entity.getComponent(BaryCenter)
+        component = entity.get_component(BaryCenter)
         if component is None:
-            component = entity.getComponent(Body)
+            component = entity.get_component(Body)
             if component is None:
-                component = entity.getComponent(Star)
+                component = entity.get_component(Star)
         if component.hasOrbit:
             component.setPos(self.getBodyPosition(component, universals.day))
 

@@ -77,27 +77,20 @@ def main_menu():
                 'texture': 'sun_1k_tex.jpg', 'mass': 2e+30,
                 'radius': 695500.0,
                 'rotation': 25.38, 'type': 'star', 'bodies': {
-            'Earth': {'atmosphere': 1, 'normal': 'Earth_NormalMap_2.jpg',
+            'Earth': {'atmosphere': 1,
                       'semimajor': 149598261, 'period': 365.256363004,
-                      'texture': 'earth#.png', 'orbit': {'a': 1.00000018,
-                                                         'e': 'lambda d: 0.01673163 - 3.661e-07 * d',
-                                                         'w': 'lambda d: 108.04266274 + 0.0031795260 * d',
-                                                         'i': 'lambda d: -0.00054346 + -0.0001337178 * d',
-                                                         'M': 'lambda d: -2.4631431299999917',
-                                                         'N': 'lambda d: -5.11260389 + -0.0024123856 * d'},
+                      'textures': {
+                          'diffuse': 'Planets/Earth/textures/earth_#.png',
+                          'specular': 'Planets/Earth/textures/earth_spec_#.png',
+                          'night': 'Planets/Earth/textures/earth_night_#.png'},
+                      'orbit': {'a': 1.00000018,
+                                'e': 'lambda d: 0.01673163 - 3.661e-07 * d',
+                                'w': 'lambda d: 108.04266274 + 0.0031795260 * d',
+                                'i': 'lambda d: -0.00054346 + -0.0001337178 * d',
+                                'M': 'lambda d: -2.4631431299999917',
+                                'N': 'lambda d: -5.11260389 + -0.0024123856 * d'},
                       'mass': 5.9742e+24, 'radius': 6371, 'rotation': 1,
-                      'type': 'solid', 'bodies': {
-                'Moon': {'semimajor': 384399, 'period': 27.321582,
-                         'texture': 'moon_1k_tex.jpg',
-                         'orbit': {'a': 384400, 'e': 'lambda d: 0.0554',
-                                   'w': 'lambda d: 318.15',
-                                   'i': 'lambda d: 5.16',
-                                   'M': 'lambda d: 135.27',
-                                   'N': 'lambda d: 125.08 + -13.176358 * d'},
-                         'mass': 7.3477e+22, 'radius': 1737.1,
-                         'rotation': 27.321582,
-                         'type': 'moon', 'axis': 1.5424}},
-                      'axis': 23.439166666666665}}, 'axis': 0}}}
+                      'type': 'solid'}}}}}
 
     def update(task=None):
         """ Main update task """
@@ -125,9 +118,8 @@ def main_menu():
     shuttle.set_pos(0, 50, 0)
     shuttle.set_hpr(-110, 30, 30)
     skybox = sandbox.base.loader.loadModel("Skybox/Skybox")
-    skybox.setScale(100)
+    skybox.setScale(1000)
     skybox.reparentTo(sandbox.base.render)
-    # shuttle.set_shader(BetterShader.load('Ships/Shuttle MKI/shuttle.vertex', 'Ships/Shuttle MKI/shuttle.fragment'))
     shuttle.set_shader(
         sandbox.base.render_pipeline.getDefaultObjectShader(False))
     sandbox.base.render_pipeline.reloadShaders()
@@ -155,7 +147,7 @@ def main_menu():
         pos = Vec3(math.sin(angle) * 10.0, math.cos(angle) * 10.0 + 50, 7)
         # pos = Vec3( (i-3.5)*15.0, 9, 5.0)
         light = PointLight()
-        light.setRadius(30.0)
+        light.setRadius(60.0)
         # light.setColor(Vec3(2))
         light.setColor(colors[i] * 2.0)
         light.setPos(pos)
@@ -167,14 +159,15 @@ def main_menu():
         lights.append(light)
         initialLightPos.append(pos)
 
-    ambient = PointLight()
+    '''ambient = PointLight()
     ambient.setRadius(300.0)
     ambient.setPos(Vec3(10, 10, 10))
     ambient.setColor(Vec3(1.0))
-    sandbox.base.render_pipeline.addLight(ambient)
+    sandbox.base.render_pipeline.addLight(ambient)'''
     sandbox.base.addTask(update, "update")
 
     from spacedrive import orbit_system
+
     key = 'Sol'
     orbit_system.create_solar_system(name=key, database=solar_system_db)
 
@@ -186,7 +179,7 @@ if run_client:
     log.info("Setting up client network")
     spacedrive.init_client_net(client_net.NetworkSystem)
     log.info("TODO: Setting up graphics translators")
-    spacedrive.init_graphics()
+    spacedrive.init_graphics(debug_mouse=True)
     # sandbox.add_system(graphics.GraphicsSystem(solarSystem.PlanetRender, solarSystem.StarRender))
     log.info("Setting up client gui")
     spacedrive.init_gui()
@@ -219,8 +212,8 @@ def loginDebug(task):
     sandbox.getSystem(client_net.NetworkSystem).sendLogin(universals.username,
                                                           "Hash Password")
 
-#taskMgr.doMethodLater(10, planetPositionDebug, "Position Debug")
-#if universals.runClient:
-#    taskMgr.doMethodLater(1, loginDebug, "Login Debug")
+# taskMgr.doMethodLater(10, planetPositionDebug, "Position Debug")
+# if universals.runClient:
+# taskMgr.doMethodLater(1, loginDebug, "Login Debug")
 #log.info("Setup complete.")
 spacedrive.run()

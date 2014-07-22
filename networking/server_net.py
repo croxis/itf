@@ -68,8 +68,8 @@ class NetworkSystem(sandbox.UDPNetworkSystem):
             sandbox.send('spawnShip', [data.name, data.className, True])
         elif msgID == protocol_old.REQUEST_STATIONS:
             entity = sandbox.entities[data.ship[0].id]
-            #info = entity.getComponent(shipComponents.InfoComponent)
-            player = entity.getComponent(shipComponents.PlayerComponent)
+            #info = entity.get_component(shipComponents.InfoComponent)
+            player = entity.get_component(shipComponents.PlayerComponent)
             stations = data.ship[0].stations
             for stationName in universals.playerStations:
                 if getattr(player, stationName) != 0:
@@ -98,7 +98,7 @@ class NetworkSystem(sandbox.UDPNetworkSystem):
             #TODO: Send initial states?
             #messenger.send("newPlayerShip", [component, entity])
         else:
-            component = sandbox.entities[accountEntities[username]].getComponent(AccountComponent)
+            component = sandbox.entities[accountEntities[username]].get_component(AccountComponent)
             if component.passwordHash != password:
                 log.info("Player " + username + " has the wrong password.")
             else:
@@ -108,7 +108,7 @@ class NetworkSystem(sandbox.UDPNetworkSystem):
     def broadcast_data(self, datagram):
         # Broadcast data out to all activeConnections
         #for accountID in accountEntities.items():
-            #sandbox.entities[accountID].getComponent()
+            #sandbox.entities[accountID].get_component()
         for addr in self.activeConnections.keys():
             self.sendData(datagram, addr)
 
@@ -225,7 +225,7 @@ class OldNetworkSystem(sandbox.EntitySystem):
                         #TODO: Send initial states?
                         messenger.send("newPlayerShip", [component, entity])
                     else:
-                        component = sandbox.entities[accountEntities[username]].getComponent(AccountComponent)
+                        component = sandbox.entities[accountEntities[username]].get_component(AccountComponent)
                         if component.passwordHash != password:
                             log.info("Player " + username + " has the wrong password.")
                         else:
@@ -246,7 +246,7 @@ class OldNetworkSystem(sandbox.EntitySystem):
     def broadcastData(self, datagram):
         # Broadcast data out to all activeConnections
         #for accountID in accountEntities.items():
-            #sandbox.entities[accountID].getComponent()
+            #sandbox.entities[accountID].get_component()
         for addr in self.activeConnections.keys():
             self.sendData(datagram, addr)
 
@@ -259,7 +259,7 @@ class OldNetworkSystem(sandbox.EntitySystem):
         print "Checking if new ship is valid for udp:", self.cWriter.isValidForUdp(datagram)
         self.broadcastData(datagram)
         datagram = protocol.movedShip(ship)
-        address = self.getAddress(ship.getComponent(ships.PilotComponent).accountEntityID)
+        address = self.getAddress(ship.get_component(ships.PilotComponent).accountEntityID)
         self.sendData(datagram, address)
 
     def getAddress(self, entityID):

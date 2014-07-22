@@ -15,12 +15,12 @@ vfs-case-sensitive #t
 # uniquify-matrix #f
 
 # Garbarge collection
-garbage-collect-states #f
+garbage-collect-states #t
 # garbage-collect-states-rate 0.2
 
 
-transform-cache #f
-state-cache #f
+transform-cache #t
+state-cache #t
 
 
 # Trying this for performance
@@ -127,7 +127,6 @@ text-page-size 128 128
 
 show-frame-rate-meter #t
 
-
 texture-anisotropic-degree 2
 texture-magfilter linear
 texture-minfilter linear
@@ -149,3 +148,7 @@ gl-immutable-texture-storage #f
 gl-dump-compiled-shaders #f
 
 gl-cube-map-seamless #t
+
+# buggy as hell
+# want-directtools #t
+# want-tk #t
