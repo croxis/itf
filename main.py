@@ -34,9 +34,12 @@ args = parser.parse_args()
 
 run_server = args.server
 run_client = args.client
-local_only = False
+run_menu = False
+if not run_server and not run_client:
+    run_menu = True
+
 if run_client:
-    # We must import this before panda due to talmoc issues
+    # We must import this before panda due to talmoc issues in linux
     from cefpython3 import cefpython
 
 from direct.directnotify.DirectNotify import DirectNotify
@@ -48,17 +51,11 @@ from networking import server_net, client_net
 loadPrcFileData("", "notify-level-ITF debug")
 log = DirectNotify().newCategory("ITF")
 
-if not run_client and not run_server:
-    run_client = True
-    run_server = True
-    local_only = True
-
 
 # After initial setup we can now start sandbox
 log.debug("Loading space drive")
 spacedrive.init(run_server=run_server,
-                run_client=run_client,
-                local_only=local_only,
+                run_client=(run_client or run_menu),
                 log_level='debug',
                 window_title='Into The Fire')
 
@@ -66,11 +63,13 @@ import solarSystem
 
 
 def main_menu():
-    """Temporary main menu management."""
+    """Main menu management."""
     import sandbox
     from panda3d.core import Vec3
-    from spacedrive.renderpipeline import BetterShader, PointLight
+    from spacedrive.renderpipeline import BetterShader, DirectionalLight, PointLight
     import math
+    import gui_manager
+    spacedrive.gui_system.setup_screen(gui_manager.MainMenu())
 
     solar_system_db = {'Sol': {
         'Sol': {'spectral': 'G2V', 'absolute magnitude': 4.83,
@@ -94,11 +93,6 @@ def main_menu():
 
     def update(task=None):
         """ Main update task """
-        # Simulate 30 FPS
-        # import time
-        # time.sleep( max(0.0, 0.033))
-        # time.sleep(-0.2)
-        # return task.cont
         if True:
             animationTime = sandbox.base.taskMgr.globalClock.getFrameTime() * 0.6
 
@@ -141,7 +135,7 @@ def main_menu():
     ]
 
     # Add some shadow casting lights
-    for i in xrange(8):
+    for i in xrange(4):
         angle = float(i) / 8.0 * math.pi * 2.0
 
         pos = Vec3(math.sin(angle) * 10.0, math.cos(angle) * 10.0 + 50, 7)
@@ -151,7 +145,7 @@ def main_menu():
         # light.setColor(Vec3(2))
         light.setColor(colors[i] * 2.0)
         light.setPos(pos)
-        light.setShadowMapResolution(2048)
+        light.setShadowMapResolution(1024)
         light.setCastsShadows(True)
 
         # add light
@@ -159,17 +153,32 @@ def main_menu():
         lights.append(light)
         initialLightPos.append(pos)
 
-    ambient = PointLight()
+    '''ambient = PointLight()
     ambient.setRadius(300.0)
     ambient.setPos(Vec3(10, 10, 10))
     ambient.setColor(Vec3(1.0))
-    sandbox.base.render_pipeline.addLight(ambient)
+    sandbox.base.render_pipeline.addLight(ambient)'''
     sandbox.base.addTask(update, "update")
 
     from spacedrive import orbit_system
 
     key = 'Sol'
     orbit_system.create_solar_system(name=key, database=solar_system_db)
+    from spacedrive.renderpipeline.classes.MovementController import MovementController
+    controller = MovementController(base)
+    controller.setup()
+    base.accept('new game screen', start_sp_game)
+
+
+def start_client():
+    """This is not for main menu display but actual core game."""
+    log.info("Setting up client network")
+    spacedrive.init_client_net(client_net.NetworkSystem)
+
+
+def start_server():
+    log.info("Setting up server network")
+    spacedrive.init_server_net(server_net.NetworkSystem)
 
 
 def toggleSceneWireframe():
@@ -181,23 +190,29 @@ def toggleSceneWireframe():
         base.render.clearRenderMode()
 
 
+def start_sp_game():
+    log.info("Starting SP Game")
+    start_server()
+    start_client()
+
+
 if run_server:
-    log.info("Setting up server network")
-    spacedrive.init_server_net(server_net.NetworkSystem)
-if run_client:
-    log.info("Setting up client network")
-    spacedrive.init_client_net(client_net.NetworkSystem)
+    start_server()
+
+if run_client or run_menu:
     log.info("TODO: Setting up graphics translators")
-    spacedrive.init_graphics(debug_mouse=True)
+    spacedrive.init_graphics(debug_mouse=False)
     # sandbox.add_system(graphics.GraphicsSystem(solarSystem.PlanetRender, solarSystem.StarRender))
     log.info("Setting up client gui")
     spacedrive.init_gui()
-    import gui_manager
-    spacedrive.gui_system.setup_screen(gui_manager.MainMenu())
     base.wireframe = False
     base.accept("f3", toggleSceneWireframe)
 
+if run_client:
+    start_client()
 
+if run_menu:
+    main_menu()
 
 
 log.info("Setting up Solar System Body Simulator")
@@ -208,10 +223,6 @@ log.info("TODO: Setting up dynamic physics")
 
 log.info("TODO: Setting up player-ship interface system")
 # sandbox.add_system(playerShipSystem.PlayerShipsSystem(ships.PilotComponent))
-
-# Just for now. We will do a formal main menu scene later
-if run_client:
-    main_menu()
 
 
 def planetPositionDebug(task):
@@ -229,4 +240,5 @@ def loginDebug(task):
 # if universals.runClient:
 # taskMgr.doMethodLater(1, loginDebug, "Login Debug")
 #log.info("Setup complete.")
+#base.bufferViewer.toggleEnable()
 spacedrive.run()

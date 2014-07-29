@@ -131,8 +131,8 @@ texture-anisotropic-degree 2
 texture-magfilter linear
 texture-minfilter linear
 
-cache-models #t
-texture-cache #t
+cache-models #f
+texture-cache #f
 
 lock-to-one-cpu #f
 support-threads #t

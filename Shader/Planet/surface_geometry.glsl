@@ -5,7 +5,7 @@
 layout(triangles) in;
 layout(triangle_strip, max_vertices=3) out;
 
-in VertexOutput vOut[3];
+in VertexOutput vInput[3];
 
 out VertexOutput vOutput;
 
@@ -15,18 +15,18 @@ out VertexOutput vOutput;
   {
      // copy attributes
     gl_Position = gl_in[i].gl_Position;
-    vOutput.positionWorld = vOut[i].positionWorld;
-    vOutput.normalWorld = vOut[i].normalWorld;
-    vOutput.texcoord = vOut[i].texcoord;
+    vOutput.positionWorld = vInput[i].positionWorld;
+    vOutput.normalWorld = vInput[i].normalWorld;
+    vOutput.texcoord = vInput[i].texcoord;
 
-    vOutput.materialDiffuse = vOut[i].materialDiffuse;
-    vOutput.materialSpecular = vOut[i].materialSpecular;
-    vOutput.materialAmbient = vOut[i].materialAmbient;
+    vOutput.materialDiffuse = vInput[i].materialDiffuse;
+    vOutput.materialSpecular = vInput[i].materialSpecular;
+    vOutput.materialAmbient = vInput[i].materialAmbient;
 
-    vOutput.tangentWorld = vOut[i].tangentWorld;
-    vOutput.binormalWorld = vOut[i].binormalWorld;
+    vOutput.tangentWorld = vInput[i].tangentWorld;
+    vOutput.binormalWorld = vInput[i].binormalWorld;
 
-    vOutput.lastProjectedPos = vOut[i].lastProjectedPos;
+    vOutput.lastProjectedPos = vInput[i].lastProjectedPos;
 
     // done with the vertex
     EmitVertex();
