@@ -66,30 +66,34 @@ def main_menu():
     """Main menu management."""
     import sandbox
     from panda3d.core import Vec3
-    from spacedrive.renderpipeline import BetterShader, DirectionalLight, PointLight
+    from spacedrive.renderpipeline import BetterShader, DirectionalLight, \
+        PointLight
     import math
     import gui_manager
+
     spacedrive.gui_system.setup_screen(gui_manager.MainMenu())
 
     solar_system_db = {'Sol': {
         'Sol': {'spectral': 'G2V', 'absolute magnitude': 4.83,
                 'texture': 'sun_1k_tex.jpg', 'mass': 2e+30,
                 'radius': 695500.0,
-                'rotation': 25.38, 'type': 'star', 'bodies': {
-            'Earth': {'atmosphere': 1,
-                      'semimajor': 149598261, 'period': 365.256363004,
-                      'textures': {
-                          'diffuse': 'Planets/Earth/textures/earth_#.png',
-                          'specular': 'Planets/Earth/textures/earth_spec_#.png',
-                          'night': 'Planets/Earth/textures/earth_night_#.png'},
-                      'orbit': {'a': 1.00000018,
-                                'e': 'lambda d: 0.01673163 - 3.661e-07 * d',
-                                'w': 'lambda d: 108.04266274 + 0.0031795260 * d',
-                                'i': 'lambda d: -0.00054346 + -0.0001337178 * d',
-                                'M': 'lambda d: -2.4631431299999917',
-                                'N': 'lambda d: -5.11260389 + -0.0024123856 * d'},
-                      'mass': 5.9742e+24, 'radius': 6371, 'rotation': 1,
-                      'type': 'solid'}}}}}
+                'rotation': 25.38, 'temperature': 5778, 'type': 'star',
+                'bodies': {
+                    'Earth': {'atmosphere': 1,
+                              'semimajor': 149598261, 'period': 365.256363004,
+                              'textures': {
+                                  'diffuse': 'Planets/Earth/textures/earth_#.png',
+                                  'specular': 'Planets/Earth/textures/earth_spec_#.png',
+                                  'night': 'Planets/Earth/textures/earth_night_#.png'},
+                              'orbit': {'a': 1.00000018,
+                                        'e': 'lambda d: 0.01673163 - 3.661e-07 * d',
+                                        'w': 'lambda d: 108.04266274 + 0.0031795260 * d',
+                                        'i': 'lambda d: -0.00054346 + -0.0001337178 * d',
+                                        'M': 'lambda d: -2.4631431299999917',
+                                        'N': 'lambda d: -5.11260389 + -0.0024123856 * d'},
+                              'mass': 5.9742e+24, 'radius': 6371,
+                              'rotation': 1,
+                              'type': 'solid'}}}}}
 
     def update(task=None):
         """ Main update task """
@@ -164,7 +168,9 @@ def main_menu():
 
     key = 'Sol'
     orbit_system.create_solar_system(name=key, database=solar_system_db)
-    from spacedrive.renderpipeline.classes.MovementController import MovementController
+    from spacedrive.renderpipeline.classes.MovementController import \
+        MovementController
+
     controller = MovementController(base)
     controller.setup()
     base.accept('new game screen', start_sp_game)
@@ -214,7 +220,6 @@ if run_client:
 if run_menu:
     main_menu()
 
-
 log.info("Setting up Solar System Body Simulator")
 spacedrive.init_orbits()
 
@@ -239,6 +244,6 @@ def loginDebug(task):
 # taskMgr.doMethodLater(10, planetPositionDebug, "Position Debug")
 # if universals.runClient:
 # taskMgr.doMethodLater(1, loginDebug, "Login Debug")
-#log.info("Setup complete.")
+# log.info("Setup complete.")
 #base.bufferViewer.toggleEnable()
 spacedrive.run()
