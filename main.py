@@ -143,10 +143,8 @@ def main_menu():
         angle = float(i) / 8.0 * math.pi * 2.0
 
         pos = Vec3(math.sin(angle) * 10.0, math.cos(angle) * 10.0 + 50, 7)
-        # pos = Vec3( (i-3.5)*15.0, 9, 5.0)
         light = PointLight()
-        light.setRadius(60.0)
-        # light.setColor(Vec3(2))
+        light.setRadius(10.0)
         light.setColor(colors[i] * 2.0)
         light.setPos(pos)
         light.setShadowMapResolution(1024)
