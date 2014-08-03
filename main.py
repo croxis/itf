@@ -116,7 +116,7 @@ def main_menu():
     shuttle.set_pos(0, 50, 0)
     shuttle.set_hpr(-110, 30, 30)
     skybox = sandbox.base.loader.loadModel("Skybox/Skybox")
-    skybox.setScale(1000)
+    skybox.setScale(100)
     skybox.reparentTo(sandbox.base.render)
     shuttle.set_shader(
         sandbox.base.render_pipeline.getDefaultObjectShader(False))
@@ -144,7 +144,7 @@ def main_menu():
 
         pos = Vec3(math.sin(angle) * 10.0, math.cos(angle) * 10.0 + 50, 7)
         light = PointLight()
-        light.setRadius(10.0)
+        light.setRadius(1000.0)
         light.setColor(colors[i] * 2.0)
         light.setPos(pos)
         light.setShadowMapResolution(1024)
