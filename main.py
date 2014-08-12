@@ -76,7 +76,7 @@ def main_menu():
     solar_system_db = {'Sol': {
         'Sol': {'spectral': 'G2V', 'absolute magnitude': 4.83,
                 'texture': 'sun_1k_tex.jpg', 'mass': 2e+30,
-                'radius': 695500.0,
+                'radius': 695500000.0,
                 'rotation': 25.38, 'temperature': 5778, 'type': 'star',
                 'bodies': {
                     'Earth': {'atmosphere': 1,
@@ -91,7 +91,7 @@ def main_menu():
                                         'i': 'lambda d: -0.00054346 + -0.0001337178 * d',
                                         'M': 'lambda d: -2.4631431299999917',
                                         'N': 'lambda d: -5.11260389 + -0.0024123856 * d'},
-                              'mass': 5.9742e+24, 'radius': 6371,
+                              'mass': 5.9742e+24, 'radius': 6371000.0,
                               'rotation': 1,
                               'type': 'solid'}}}}}
 
@@ -113,10 +113,15 @@ def main_menu():
 
     shuttle = sandbox.base.loader.loadModel("Ships/Shuttle MKI/shuttle")
     shuttle.reparent_to(sandbox.base.render)
-    shuttle.set_pos(0, 50, 0)
-    shuttle.set_hpr(-110, 30, 30)
+    #shuttle.set_pos(-25, -25, 0)
+    shuttle.set_pos(10, 50, 10)
+    shuttle.set_hpr(-110, -30, 0)
+    '''from direct.interval.LerpInterval import LerpHprInterval
+    l = LerpHprInterval(shuttle, 10, Vec3(-110, -30, 360))
+    l.loop()'''
+
     skybox = sandbox.base.loader.loadModel("Skybox/Skybox")
-    skybox.setScale(100)
+    skybox.setScale(sandbox.base.camLens.get_far()*0.8)
     skybox.reparentTo(sandbox.base.render)
     shuttle.set_shader(
         sandbox.base.render_pipeline.getDefaultObjectShader(False))
@@ -139,12 +144,12 @@ def main_menu():
     ]
 
     # Add some shadow casting lights
-    for i in xrange(4):
+    '''for i in xrange(4):
         angle = float(i) / 8.0 * math.pi * 2.0
 
         pos = Vec3(math.sin(angle) * 10.0, math.cos(angle) * 10.0 + 50, 7)
         light = PointLight()
-        light.setRadius(1000.0)
+        light.setRadius(10.0)
         light.setColor(colors[i] * 2.0)
         light.setPos(pos)
         light.setShadowMapResolution(1024)
@@ -153,25 +158,36 @@ def main_menu():
         # add light
         sandbox.base.render_pipeline.addLight(light)
         lights.append(light)
-        initialLightPos.append(pos)
+        initialLightPos.append(pos)'''
 
-    '''ambient = PointLight()
-    ambient.setRadius(300.0)
-    ambient.setPos(Vec3(10, 10, 10))
-    ambient.setColor(Vec3(1.0))
-    sandbox.base.render_pipeline.addLight(ambient)'''
+    import spacedrive.utils.texture as texture_utils
+    #texture_utils.prepare_srgb(sandbox.base.render)
+
     sandbox.base.addTask(update, "update")
 
     from spacedrive import orbit_system
 
     key = 'Sol'
     orbit_system.create_solar_system(name=key, database=solar_system_db)
-    from spacedrive.renderpipeline.classes.MovementController import \
-        MovementController
+    import sandbox
+    from spacedrive.celestial_components import CelestialComponent
+    for component in sandbox.get_components(CelestialComponent):
+        if component.name.lower() == 'earth':
+            from panda3d.core import Point3D
+            spawn = Point3D(component.true_pos)
+            spawn.set_y(spawn.get_y() - (6471000*1.5))
+            #spawn.set_x(spawn.get_x() - (6471000*1.5))
+            #spawn.set_x(spawn.get_x() + 6471000)
+            system = sandbox.get_system(spacedrive.GraphicsSystem)
+            system.current_pos = spawn
+            print("Spawn point:", spawn)
+            print("Spawn delta:", spawn - component.true_pos)
+    from spacedrive.renderpipeline.Code.MovementController import MovementController
 
     controller = MovementController(base)
     controller.setup()
     base.accept('new game screen', start_sp_game)
+    #base.camera.set_hpr(180, 0, 0)
 
 
 def start_client():
@@ -187,7 +203,6 @@ def start_server():
 
 def toggleSceneWireframe():
     base.wireframe = not base.wireframe
-
     if base.wireframe:
         base.render.setRenderModeWireframe()
     else:
@@ -198,6 +213,16 @@ def start_sp_game():
     log.info("Starting SP Game")
     start_server()
     start_client()
+
+
+log.info("Setting up Solar System Body Simulator")
+spacedrive.init_orbits()
+
+log.info("TODO: Setting up dynamic physics")
+# sandbox.add_system(physics.PhysicsSystem(ships.BulletPhysicsComponent))
+
+log.info("TODO: Setting up player-ship interface system")
+# sandbox.add_system(playerShipSystem.PlayerShipsSystem(ships.PilotComponent))
 
 
 if run_server:
@@ -218,20 +243,19 @@ if run_client:
 if run_menu:
     main_menu()
 
-log.info("Setting up Solar System Body Simulator")
-spacedrive.init_orbits()
-
-log.info("TODO: Setting up dynamic physics")
-# sandbox.add_system(physics.PhysicsSystem(ships.BulletPhysicsComponent))
-
-log.info("TODO: Setting up player-ship interface system")
-# sandbox.add_system(playerShipSystem.PlayerShipsSystem(ships.PilotComponent))
 
 
 def planetPositionDebug(task):
-    log.debug("===== Day: " + str(universals.day) + " =====")
-    for bod in sandbox.getSystem(solarSystem.SolarSystemSystem).bodies:
-        log.debug(bod.getName() + ": " + str(bod.getPos()))
+    #log.debug("===== Day: " + str(universals.day) + " =====")
+    import sandbox
+    from spacedrive.celestial_components import CelestialComponent
+    from spacedrive.render_components import CelestialRenderComponent
+    #graphics_system = sandbox.get_system(spacedrive.GraphicsSystem)
+    for component in sandbox.get_components(CelestialComponent):
+        log.debug("True Pos: " + component.name + ": " + str(component.true_pos))
+    for component in sandbox.get_components(CelestialRenderComponent):
+        print("Render Pos: " + component.mesh.get_name() + ": " + str(component.mesh.get_pos()))
+        print("Render Scale: " + component.mesh.get_name() + ": " + str(component.mesh.get_scale()))
     return task.again
 
 
@@ -239,7 +263,7 @@ def loginDebug(task):
     sandbox.getSystem(client_net.NetworkSystem).sendLogin(universals.username,
                                                           "Hash Password")
 
-# taskMgr.doMethodLater(10, planetPositionDebug, "Position Debug")
+taskMgr.doMethodLater(10, planetPositionDebug, "Position Debug")
 # if universals.runClient:
 # taskMgr.doMethodLater(1, loginDebug, "Login Debug")
 # log.info("Setup complete.")

@@ -114,7 +114,7 @@ textures-power-2 none
 
 # Better GL performance
 gl-finish #f
-gl-force-no-error #f
+gl-force-no-error #t
 gl-check-errors #f
 gl-force-no-flush #t
 gl-force-no-scissor #t
@@ -131,8 +131,8 @@ texture-anisotropic-degree 2
 texture-magfilter linear
 texture-minfilter linear
 
-cache-models #f
-texture-cache #f
+# cache-models #f
+# texture-cache #f
 
 lock-to-one-cpu #f
 support-threads #t
@@ -152,3 +152,8 @@ gl-cube-map-seamless #t
 # buggy as hell
 # want-directtools #t
 # want-tk #t
+
+# model-cache-dir $USER_APPDATA/Panda3D-1.9/cache
+model-cache-textures #f
+
+notify-level-pnmimage error
