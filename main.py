@@ -79,7 +79,7 @@ def main_menu():
                 'radius': 695500000.0,
                 'rotation': 25.38, 'temperature': 5778, 'type': 'star',
                 'bodies': {
-                    'Earth': {'atmosphere': 1,
+                    'Earth': {'atmosphere': {'height': 10000},
                               'semimajor': 149598261, 'period': 365.256363004,
                               'textures': {
                                   'diffuse': 'Planets/Earth/textures/earth_#.png',
@@ -113,8 +113,8 @@ def main_menu():
 
     shuttle = sandbox.base.loader.loadModel("Ships/Shuttle MKI/shuttle")
     shuttle.reparent_to(sandbox.base.render)
-    #shuttle.set_pos(-25, -25, 0)
-    shuttle.set_pos(10, 50, 10)
+    shuttle.set_pos(100, 0, 0)
+    #shuttle.set_pos(10, 50, 10)
     shuttle.set_hpr(-110, -30, 0)
     '''from direct.interval.LerpInterval import LerpHprInterval
     l = LerpHprInterval(shuttle, 10, Vec3(-110, -30, 360))
@@ -175,8 +175,8 @@ def main_menu():
         if component.name.lower() == 'earth':
             from panda3d.core import Point3D
             spawn = Point3D(component.true_pos)
-            spawn.set_y(spawn.get_y() - (6471000*1.5))
-            #spawn.set_x(spawn.get_x() - (6471000*1.5))
+            #spawn.set_y(spawn.get_y() - (6471000*1.5))
+            spawn.set_x(spawn.get_x() - (6471000*2))
             #spawn.set_x(spawn.get_x() + 6471000)
             system = sandbox.get_system(spacedrive.GraphicsSystem)
             system.current_pos = spawn
@@ -187,7 +187,7 @@ def main_menu():
     controller = MovementController(base)
     controller.setup()
     base.accept('new game screen', start_sp_game)
-    #base.camera.set_hpr(180, 0, 0)
+    base.camera.set_hpr(-90, 0, 0)
 
 
 def start_client():
