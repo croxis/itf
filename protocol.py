@@ -37,8 +37,6 @@ LOGIN_ACCEPTED = 103
 ACCOUNT_REC = 110  # Requests name of account for a given id entity id
 ACCOUNT_ACK = 111
 
-CHAT = 104
-
 
 def genericPacket(key, packetCount=0):
     myPyDatagram = PyDatagram()

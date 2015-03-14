@@ -1,3 +1,9 @@
+# ## Python 3 look ahead imports ###
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 from panda3d.core import loadPrcFileData
 
 import datetime
@@ -21,6 +27,7 @@ import sandbox
 
 loadPrcFileData("", "notify-level-ITF-ServerNetwork debug")
 log = DirectNotify().newCategory("ITF-ServerNetwork")
+
 
 class AccountComponent(object):
     address = None
