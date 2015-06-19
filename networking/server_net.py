@@ -80,7 +80,7 @@ class NetworkSystem(sandbox.UDPNetworkSystem):
             stations = data.ship[0].stations
             for stationName in universals.playerStations:
                 if getattr(player, stationName) != 0:
-                    print "Resend ship select window"
+                    log.info("Resend ship select window")
             sandbox.send('setPlayerStations', [address, data.ship[0].id, stations])
         elif msgID == protocol_old.SET_THROTTLE:
             sandbox.send('setThrottle', [self.playerMap[address], data])
@@ -129,10 +129,10 @@ class NetworkSystem(sandbox.UDPNetworkSystem):
 
     def playerDisconnected(self, address):
         try:
-            print "Removing", address, "from", self.playerMap
+            log.info("Removing", address, "from", self.playerMap)
             del self.playerMap[address]
         except:
-            print address, "not in", self.playerMap
+            log.info(address, "not in", self.playerMap)
 
     def confirmPlayerStations(self, netAddress, shipid, stations):
         self.playerMap[netAddress] = shipid
@@ -263,7 +263,7 @@ class OldNetworkSystem(sandbox.EntitySystem):
 
     def shipGenerated(self, ship):
         datagram = protocol.newShip(ship)
-        print "Checking if new ship is valid for udp:", self.cWriter.isValidForUdp(datagram)
+        log.info("Checking if new ship is valid for udp:", self.cWriter.isValidForUdp(datagram))
         self.broadcastData(datagram)
         datagram = protocol.movedShip(ship)
         address = self.getAddress(ship.get_component(ships.PilotComponent).accountEntityID)
