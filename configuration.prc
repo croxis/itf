@@ -3,7 +3,9 @@
 assert-abort #f
 
 # File system should be case sensitive
-vfs-case-sensitive #t
+# NOTICE: Set this to #f if you are using tempfile. Because it returns
+# wrong cased directory paths :(
+vfs-case-sensitive #f
 
 # Animations on the gpu
 # hardware-animated-vertices #t
@@ -17,16 +19,6 @@ vfs-case-sensitive #t
 # Garbarge collection
 garbage-collect-states #t
 # garbage-collect-states-rate 0.2
-
-
-transform-cache #t
-state-cache #t
-
-
-# Trying this for performance
-# uniquify-transforms #f
-# uniquify-states #f 
-# uniquify-attribs #f
 
 # Faster texture loading
 # fake-texture-image someimage.png
@@ -80,7 +72,7 @@ win-size 1600 900
 # cursor-filename lalala
 
 # The title of the window
-window-title Render Pipeline by tobspr 
+window-title ITF
 
 
 # Framebuffers use SRGB
@@ -109,7 +101,7 @@ sync-video #f
 textures-power-2 none
 
 # Dump shaders
-# gl-dump-compiled-shaders #f
+gl-dump-compiled-shaders #f
 # notify-level-glgsg debug
 
 # Better GL performance
@@ -123,11 +115,12 @@ gl-debug #t
 # gl-enable-memory-barriers #f
 
 text-minfilter linear
+text-magfilter linear
 text-page-size 128 128
 
 show-frame-rate-meter #t
 
-texture-anisotropic-degree 2
+texture-anisotropic-degree 0
 texture-magfilter linear
 texture-minfilter linear
 
@@ -157,3 +150,16 @@ gl-cube-map-seamless #t
 model-cache-textures #f
 
 notify-level-pnmimage error
+show-buffers #f
+
+# GPU Timer queries
+pstats-gpu-timing #t
+auto-flip #f
+
+gl-debug-object-labels #f
+
+
+gl-coordinate-system default
+
+# notify-level-gsg spam
+# notify-level-glgsg error

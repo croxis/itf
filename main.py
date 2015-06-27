@@ -43,7 +43,7 @@ if run_client:
     from cefpython3 import cefpython
 
 from direct.directnotify.DirectNotify import DirectNotify
-from panda3d.core import loadPrcFileData
+from panda3d.core import loadPrcFileData, Shader
 import spacedrive
 
 from networking import server_net, client_net
@@ -66,8 +66,7 @@ def main_menu():
     """Main menu management."""
     import sandbox
     from panda3d.core import Vec3
-    from spacedrive.renderpipeline import BetterShader, DirectionalLight, \
-        PointLight
+    from spacedrive.renderpipeline import DirectionalLight, PointLight
     import math
     import gui_manager
 
@@ -123,11 +122,9 @@ def main_menu():
     skybox = sandbox.base.loader.loadModel("Skybox/Skybox")
     skybox.setScale(sandbox.base.camLens.get_far()*0.8)
     skybox.reparentTo(sandbox.base.render)
-    shuttle.set_shader(
-        sandbox.base.render_pipeline.getDefaultObjectShader(False))
-    sandbox.base.render_pipeline.reloadShaders()
-    skybox.setShader(BetterShader.load(
-        "Shader/DefaultObjectShader/vertex.glsl",
+    #sandbox.render_pipeline.reloadShaders()
+    skybox.setShader(Shader.load(Shader.SL_GLSL,
+        "Shader/DefaultShaders/Opaque/vertex.glsl",
         "Shader/Skybox/fragment.glsl"))
     lights = []
     initialLightPos = []
