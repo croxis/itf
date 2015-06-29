@@ -113,6 +113,7 @@ def main_menu():
     shuttle = sandbox.base.loader.loadModel("Ships/Shuttle MKI/shuttle")
     shuttle.reparent_to(sandbox.base.render)
     shuttle.set_pos(100, 0, 0)
+    #shuttle.set_pos(00, 100, 0)
     #shuttle.set_pos(10, 50, 10)
     shuttle.set_hpr(-110, -30, 0)
     '''from direct.interval.LerpInterval import LerpHprInterval
@@ -120,10 +121,10 @@ def main_menu():
     l.loop()'''
 
     skybox = sandbox.base.loader.loadModel("Skybox/Skybox")
-    skybox.setScale(sandbox.base.camLens.get_far()*0.8)
-    skybox.reparentTo(sandbox.base.render)
-    #sandbox.render_pipeline.reloadShaders()
-    skybox.setShader(Shader.load(Shader.SL_GLSL,
+    skybox.set_scale(sandbox.base.camLens.get_far()*0.8)
+    skybox.reparent_to(sandbox.base.render)
+    sandbox.render_pipeline.reloadShaders()
+    skybox.setShader(Shader.load(Shader.SLGLSL,
         "Shader/DefaultShaders/Opaque/vertex.glsl",
         "Shader/Skybox/fragment.glsl"))
     lights = []
@@ -160,7 +161,7 @@ def main_menu():
     import spacedrive.utils.texture as texture_utils
     #texture_utils.prepare_srgb(sandbox.base.render)
 
-    sandbox.base.addTask(update, "update")
+    #sandbox.base.addTask(update, "update")
 
     from spacedrive import orbit_system
 
